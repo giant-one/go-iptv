@@ -6,6 +6,7 @@ import (
 	"go-iptv/dto"
 	"log"
 	"os/exec"
+	"strings"
 	"sync"
 	"time"
 
@@ -51,6 +52,16 @@ func StartLicense() bool {
 	return true
 }
 
+func IsRunning() bool {
+	cmd := exec.Command("bash", "-c", "ps -ef | grep 'license' | grep -v grep")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Printf("检查License进程出错: %v", err)
+		return false
+	}
+	return strings.Contains(string(output), "license")
+}
+
 // -------------------- 连接管理 --------------------
 
 // 创建连接（带自动重连）
@@ -90,6 +101,52 @@ func (c *WSClient) connect() error {
 	time.Sleep(3 * time.Second)
 	c.connect()
 	return fmt.Errorf("连接失败: %w", err)
+}
+
+// 判断 WS 是否已连接
+func (c *WSClient) IsOnline() bool {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	return c.conn != nil && !c.closed
+}
+
+// -------------------- 重启并重新连接 --------------------
+
+// RestartLicense 会尝试重启 License 服务并重新建立 WS 连接
+func (c *WSClient) RestartLic() bool {
+	log.Println("♻️ 正在重启 License 服务...")
+
+	// 1. 终止旧进程
+	stopCmd := exec.Command("bash", "-c", "pkill -f 'license'")
+	if err := stopCmd.Run(); err != nil {
+		log.Printf("⚠️ 停止License进程失败: %v", err)
+	}
+
+	time.Sleep(2 * time.Second) // 等待进程彻底退出
+
+	// 2. 启动新进程
+	if !StartLicense() {
+		log.Println("❌ License 启动失败")
+		return false
+	}
+
+	time.Sleep(3 * time.Second) // 给新进程一点启动时间
+
+	// 3. 重连 WebSocket
+	c.lock.Lock()
+	if c.conn != nil {
+		c.conn.Close()
+	}
+	c.closed = false
+	c.lock.Unlock()
+
+	if err := c.connect(); err != nil {
+		log.Printf("❌ License WS 重连失败: %v", err)
+		return false
+	}
+
+	log.Println("✅ License 已成功重启并重新连接")
+	return true
 }
 
 // -------------------- 心跳机制 --------------------
@@ -192,7 +249,7 @@ func (c *WSClient) Close() {
 
 	if c.conn != nil {
 		c.conn.Close()
-		log.Println("🔒 License服务 已关闭")
+		log.Println("🔒 License服务断开")
 	}
 }
 

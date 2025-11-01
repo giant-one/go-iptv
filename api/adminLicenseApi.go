@@ -24,6 +24,8 @@ func License(c *gin.Context) {
 			res = service.ImportLicense(params)
 		case "proxy":
 			res = service.Proxy(params)
+		case "resEng":
+			res = service.ResEng()
 		}
 
 	}

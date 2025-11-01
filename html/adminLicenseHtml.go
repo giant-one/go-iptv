@@ -35,6 +35,19 @@ func License(c *gin.Context) {
 	pageData.Lic = dao.Lic
 	pageData.Port = cfg.Proxy.Port
 	pageData.Lic.ExpStr = time.Unix(pageData.Lic.Exp, 0).Format("2006-01-02 15:04:05")
+	if dao.IsRunning() {
+		pageData.Status = 1
+	}
+	if dao.WS.IsOnline() {
+		pageData.Online = 1
+	}
+
+	verJson, err := dao.WS.SendWS(dao.Request{Action: "getVersion"})
+	if err == nil {
+		if err := json.Unmarshal(verJson.Data, &pageData.Version); err != nil {
+			log.Println("版本信息解析错误:", err)
+		}
+	}
 
 	c.HTML(200, "admin_license.html", pageData)
 }

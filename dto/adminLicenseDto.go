@@ -7,6 +7,9 @@ type AdminLicenseDto struct {
 	Port      int64  `json:"port"`
 	ProxyAddr string `json:"proxy_addr"`
 	Lic       Lic    `json:"lic"`
+	Status    int64  `json:"status"`
+	Online    int64  `json:"online"`
+	Version   string `json:"version"`
 }
 
 type Lic struct {

@@ -653,10 +653,20 @@ function getChannelsTxt(btn){
 			if (data.type === "success") {
 				const tbody = document.getElementById("channellist_tbody");
 				var result = "";
+				var purls = "";
 				data.data.forEach(item => {
 					result += item.status + "|" + item.name + "," + item.url + "\n";
+					if (item.purl != ""){
+						purls += item.status + "|" + item.name + "," + item.purl + "\n";
+					}
 				});
 				$("#srclist").val(result);
+				if (purls != ""){
+					$("#plist").val(purls);
+				}else {
+					$("#plist").val("未授权或未开启代理");
+				}
+				resetShowUrl();
 			}
 		},
 		error: function() {
@@ -664,6 +674,34 @@ function getChannelsTxt(btn){
 		}
 	});
 }
+
+function resetShowUrl() {
+    const src = document.getElementById("srclist");
+    const proxy = document.getElementById("plist");
+    const btn = document.getElementById("showPurl");
+
+    src.style.display = "";
+    proxy.style.display = "none";
+    if (btn) btn.innerText = "切换代理地址";
+}
+
+function changeShowUrl(btn) {
+    const src = document.getElementById("srclist");
+    const proxy = document.getElementById("plist");
+
+    if (src.style.display === "none") {
+        // 显示原始地址
+        src.style.display = "";
+        proxy.style.display = "none";
+        btn.innerText = "切换代理地址";
+    } else {
+        // 显示代理地址
+        src.style.display = "none";
+        proxy.style.display = "";
+        btn.innerText = "切换原始地址";
+    }
+}
+
 function editChannel(btn) {
 	var $tr = $(btn).closest("tr"); 
 	var chid = $tr.find(".ch-id").data("value");
@@ -1049,7 +1087,7 @@ function proxyLock(btn) {
 					action: function () {
 						input.removeAttribute("readonly");
 						input.focus();
-						input.value = `${window.location.protocol}//${window.location.hostname}`;
+						input.value = window.location.protocol + '//' + window.location.hostname;
 						icon.className = "mdi mdi-lock-open"; 
 						btn.classList.remove("btn-danger");
 						btn.classList.add("btn-primary"); 
@@ -1177,6 +1215,30 @@ function caMovetop() {
             }
         },
         error: function () {
+            lightyear.notify("操作失败", 'danger', 1000);
+        }
+    });
+}
+
+function resEng() {
+	lightyear.loading('show');
+    const params = new URLSearchParams();
+    params.append("resEng", "");
+	$.ajax({
+        url: "/admin/license",
+        type: "POST",
+        data: params.toString(),
+        success: function (data) {
+            if (data.type === "success") {
+				lightyear.loading('hide');
+                loadPage("/admin/license");
+            } else {
+				lightyear.loading('hide');
+                lightyear.notify(data.msg, data.type, 1000);
+            }
+        },
+        error: function () {
+			lightyear.loading('hide');
             lightyear.notify("操作失败", 'danger', 1000);
         }
     });

@@ -4,46 +4,62 @@
 <main class="lyear-layout-content">
 	<div class="container-fluid">
 		<div class="row">
-            <div class="col-lg-12">
+            <div class="col-lg-6">
                 <div class="card">
-                    <div class="card-header"><h4>授权信息</h4></div>
+                    <div class="card-header"><h4>授权信息</h4>
+                        <button class="btn btn-info" 
+                            type="button"
+                            data-toggle="modal" data-target="#import"
+                            style="position: absolute; top: 10px; right: 25px; margin: 0;">
+                            导入授权
+                        </button>
+                    </div>
                     <div class="card-body" style="position: relative;">
                         <p>机器码：{{ .Lic.ID }}</p>
                         <p>授权状态：{{ if eq .Lic.Tpye 1 }}<font color="#33a996">已授权</font>{{ else if eq .Lic.Tpye 2 }}<font color="#33a996">永久授权</font>{{else}}<font color="red">未授权</font>{{ end }}</p>
                         <p>过期时间：{{ if eq .Lic.Tpye 1 }}{{ .Lic.ExpStr }}{{ else if eq .Lic.Tpye 2 }}永久授权{{ end }}</p>
-                        <button class="btn btn-info" 
-                            type="button"
-                            data-toggle="modal" data-target="#import"
-                            style="position: absolute; top: 10px; right: 10px; margin: 0;">
-                            导入授权
-                        </button>
                     </div>
                 </div>
                 <div class="modal fade" id="import" tabindex="-1" role="dialog">
-									<div class="modal-dialog" role="document">
-										<div class="modal-content">
-											<div class="modal-header">
-												<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#lickey').val('');"><span aria-hidden="true">&times;</span></button>
-												<h4 class="modal-title">导入授权</h4>
-											</div>
-											<form method="post" action="/admin/license">
-												<div class="modal-body">
-													<div class="form-group col-xs-12">
-                                                        <label for="lickey">授权码</label>
-                                                        <textarea class="form-control" rows="5" id="lickey" name="lickey" placeholder="请输入授权码"></textarea>
-                                                        <small class="help-block">已赞助用户在QQ群或邮箱 1249851115@qq.com 联系作者并提供机器码和交易截图</small>
-													</div>
-												</div>
-												<div class="modal-footer">
-													<button type="button" onclick="submitFormPOST(this)" class="btn btn-primary" name="importLic">确定</button>
-													<button type="button" class="btn btn-default" data-dismiss="modal" onclick="$('#lickey').val('');">关闭</button>
-												</div>
-											</form>
-										</div>
-									</div>
-								</div>
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#lickey').val('');"><span aria-hidden="true">&times;</span></button>
+                                <h4 class="modal-title">导入授权</h4>
+                            </div>
+                            <form method="post" action="/admin/license">
+                                <div class="modal-body">
+                                    <div class="form-group col-xs-12">
+                                        <label for="lickey">授权码</label>
+                                        <textarea class="form-control" rows="5" id="lickey" name="lickey" placeholder="请输入授权码"></textarea>
+                                        <small class="help-block">已赞助用户在QQ群或邮箱 1249851115@qq.com 联系作者并提供机器码和交易截图</small>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" onclick="submitFormPOST(this)" class="btn btn-primary" name="importLic">确定</button>
+                                    <button type="button" class="btn btn-default" data-dismiss="modal" onclick="$('#lickey').val('');">关闭</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
 			</div>
 
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header"><h4>引擎状态</h4>
+                        <button class="btn btn-info" onclick="resEng()"
+                            style="position: absolute; top: 10px; right: 25px; margin: 0;">
+                            重启引擎
+                        </button>
+                    </div>
+                    <div class="card-body" style="position: relative;">
+                        <p>引擎状态：{{ if eq .Status 1 }}<font color="#33a996">运行中</font>{{else}}<font color="red">已下线</font>{{ end }}</p>
+                        <p>连接状态：{{ if eq .Online 1 }}<font color="#33a996">已连接</font>{{else}}<font color="red">已下线</font>{{ end }}</p>
+                        <p>引擎版本：{{ .Version }}</p>
+                    </div>
+                </div>
+			</div>
             <div class="col-lg-12">
                 <div class="card">
                     <div class="card-header"><h4>功能开关</h4></div>
@@ -52,8 +68,10 @@
                 <div class="row">
                     <div class="col-lg-6">
                         <div class="card">
-                            <div class="card-header"><h4>代理</h4></div>
-                            <div class="card-body">
+                            <div class="card-header"><h4>代理</h4>
+                            {{ if eq .Lic.Tpye 0 }} <span class="badge badge-danger">未授权</span>{{ end }}
+                            </div>
+                            <div class="card-body" {{ if eq .Lic.Tpye 0 }}style="pointer-events: none; opacity: 0.6;"{{ end }}>
                                 <form method="post" action="/admin/license">
                                 <div class="input-group"> 
                                     <label>代理地址:</label>&nbsp;&nbsp;<button class="btn btn-label btn-danger" type="button" id="lockBtn" onclick="proxyLock(this)"
