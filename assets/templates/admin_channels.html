@@ -178,7 +178,7 @@
 											</td>
 											<td class="status-show">{{ if eq .Enable 1 }}<font color="#33a996">上线</font>{{else}}<font color="red">下线</font>{{end}}</td>
 											<td class="ca-proxy" data-value="{{ .Proxy }}">{{ if eq .Proxy 1 }}<font color="#33a996">启用</font>{{else}}<font color="red">关闭</font>{{end}}</td>
-											<td class="ca-rules" data-value="{{ .Rules }}">{{ .Rules }}</td>
+											<td class="ca-rules" data-value="{{ .Rules }}">{{ .RulesShow }}</td>
 											<td>
 												<button type="button" onclick="tdBtnPOST(this)" name="categoryStatus" value="{{.ID}}" class="btn btn-xs {{if eq .Enable 1 }}btn-warning">下线{{else}}btn-success">上线{{end}}</button>
 												<button class="btn btn-xs btn-info" type="button" value="{{.ID}}" data-toggle="modal" onclick="getCategory(this)" data-target="#addclass">编辑</button>

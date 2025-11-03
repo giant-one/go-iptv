@@ -35,6 +35,14 @@ func Channels(c *gin.Context) {
 	dao.DB.Model(&models.IptvCategory{}).Order("sort ASC").Find(&pageData.Categorys)
 	dao.DB.Model(&models.IptvEpg{}).Where("status = 1").Find(&pageData.Epgs)
 
+	for i, ch := range pageData.Categorys {
+		if len(ch.Rules) > 10 {
+			pageData.Categorys[i].RulesShow = ch.Rules[:10] + "..."
+			continue
+		}
+		pageData.Categorys[i].RulesShow = ch.Rules
+	}
+
 	logoList := until.GetLogos()
 	for i, v := range pageData.Epgs {
 		epgName := strings.SplitN(v.Name, "-", 2)[1]
