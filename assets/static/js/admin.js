@@ -271,6 +271,9 @@ function tdBtnPOST(btn) {
 					btn.classList.add("btn-warning");
 					btn.textContent = "下线"; 
 				}
+			}else if (btn.name.includes("testResolutionOne")) {
+				var caid = $("#showcaId").val();
+				getChannels(caid);
 			}else{
 				var sub = $(btn).closest('.modal');
 				sub.modal('hide');
@@ -603,7 +606,6 @@ function getChannels(id) {
         type: "POST",
         data: { caId: id, getchannels: "" },
         success: function(data) {
-            lightyear.notify(data.msg, data.type, 3000);
             if (data.type === "success") {
                 const tbody = document.getElementById("channellist_tbody");
                 tbody.innerHTML = "";
@@ -619,12 +621,15 @@ function getChannels(id) {
   '<td class="ch-name" data-value="' + item.name + '">' + item.name + '</td>' +
   '<td class="ch-url" data-value="' + item.url + '"><a href="' + item.url + '" target="_blank">' + displayUrl + '</a></td>' +
   '<td class="status-show">' + (item.status === 1 ? '<font color="#33a996">上线</font>' : '<font color="red">下线</font>') + '</td>' +
+  '<td>' + item.resolution + '</td>' +
+  '<td>' + item.speed + '</td>' +
   '<td>' + (item.epg_name || '未绑定') + '</td>' +
   '<td>' + (item.logo === '' 
       ? '无' 
       : '<div id="logo_' + item.id + '" style="position:relative;"><img class="ch-logo" src="' + item.logo + '" alt="预览" style="background-color:black;height:38px;border:1px solid #ccc;border-radius:4px;cursor:pointer;"></div>') + '</td>' +
   '<td>' +
     '<button type="button" onclick="tdBtnPOST(this)" name="channelsStatus" value="' + item.id + '" class="btn btn-xs ' + (item.status === 1 ? 'btn-warning">下线' : 'btn-success">上线') + '</button>&nbsp;' +
+	'<button type="button" onclick="tdBtnPOST(this)" name="testResolutionOne" value="' + item.id + '" class="btn btn-xs btn-success">分辨率测试</button>&nbsp;' +
     '<button class="btn btn-xs btn-info" type="button" value="' + item.id + '" data-toggle="modal" onclick="editChannel(this)" data-target="#editchannel">编辑</button>&nbsp;' +
     '<button class="btn btn-xs btn-danger" type="button" onclick="tdBtnPOST(this)" name="dellist" value="' + item.id + '">删除</button>' +
   '</td>';
@@ -649,7 +654,6 @@ function getChannelsTxt(btn){
 		type: "POST",
 		data: { caId: cid, getchannels: "" },
 		success: function(data) {
-			lightyear.notify(data.msg, data.type, 3000);
 			if (data.type === "success") {
 				const tbody = document.getElementById("channellist_tbody");
 				var result = "";

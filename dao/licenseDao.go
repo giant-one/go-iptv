@@ -20,8 +20,8 @@ var Lic dto.Lic
 
 // 固定请求结构体
 type Request struct {
-	Action string `json:"a"`
-	// Data   interface{} `json:"data"`
+	Action string      `json:"a"`
+	Data   interface{} `json:"d"`
 }
 
 // 固定响应结构体
@@ -153,7 +153,7 @@ func (c *WSClient) RestartLic() bool {
 
 func (c *WSClient) heartbeat() {
 	log.Println("启动心跳检测...")
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
 	for {

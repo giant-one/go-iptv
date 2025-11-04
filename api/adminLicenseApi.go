@@ -26,6 +26,10 @@ func License(c *gin.Context) {
 			res = service.Proxy(params)
 		case "resEng":
 			res = service.ResEng()
+		case "autoRes":
+			res = service.AutoRes(params)
+		case "disCh":
+			res = service.DisCh(params)
 		}
 
 	}

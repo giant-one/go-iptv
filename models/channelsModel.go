@@ -5,6 +5,7 @@ type IptvChannel struct {
 	Name       string `gorm:"column:name" json:"name"`
 	Url        string `gorm:"column:url" json:"url"`
 	Resolution string `gorm:"column:resolution" json:"resolution"`
+	Speed      string `gorm:"column:speed" json:"speed"`
 	Status     int64  `gorm:"column:status" json:"status"`
 	Sort       int64  `gorm:"column:sort" json:"sort"`
 	EId        int64  `gorm:"column:e_id" json:"e_id"`
@@ -21,6 +22,7 @@ type IptvChannelShow struct {
 	Name       string `gorm:"column:name" json:"name"`
 	Url        string `gorm:"column:url" json:"url"`
 	Resolution string `gorm:"column:resolution" json:"resolution"`
+	Speed      string `gorm:"column:speed" json:"speed"`
 	Status     int64  `gorm:"column:status" json:"status"`
 	Sort       int64  `gorm:"column:sort" json:"sort"`
 	EId        int64  `gorm:"column:e_id" json:"e_id"`

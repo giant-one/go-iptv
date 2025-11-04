@@ -285,6 +285,7 @@ func BindChannel() bool {
 			}
 		}
 	}
+
 	go CleanAutoCacheAll() // 清理缓存
 	return true
 }

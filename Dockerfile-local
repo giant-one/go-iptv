@@ -1,0 +1,41 @@
+FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/golang:1.24-alpine AS builder
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go env -w GO111MODULE=on 
+RUN go env -w  GOPROXY=https://goproxy.cn,direct 
+RUN go mod download
+
+COPY . .
+
+RUN go build -o iptv main.go
+RUN chmod +x /app/iptv
+
+
+FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/alpine:latest
+
+VOLUME /config
+WORKDIR /app
+EXPOSE 80 8080
+
+ENV TZ=Asia/Shanghai
+RUN apk add --no-cache openjdk8 bash curl tzdata sqlite ffmpeg ;\
+    cp /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+COPY ./client /client
+COPY ./apktool/* /usr/bin/
+COPY ./static /app/static
+COPY ./database /app/database
+COPY ./config.yml /app/config.yml
+COPY ./README.md  /app/README.md
+COPY ./logo /app/logo
+COPY ./ChangeLog.md /app/ChangeLog.md
+COPY ./Version /app/Version
+
+RUN chmod 777 -R /usr/bin/apktool* 
+
+COPY --from=builder /app/iptv .
+COPY ./license .
+
+CMD ["./iptv"]

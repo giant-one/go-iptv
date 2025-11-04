@@ -52,6 +52,8 @@ func Channels(c *gin.Context) {
 			res = service.ChannelsChangeStatus(params)
 		case "saveCa":
 			res = service.SaveCategory(params)
+		case "testResolutionOne":
+			res = service.TestResolutionOne(params)
 		}
 	}
 

@@ -110,6 +110,11 @@ func doRebuild(ctx context.Context) {
 		log.Println("⚠️ 重建任务被中断")
 		return
 	default:
+		cfg := dao.GetConfig()
+		if cfg.Resolution.Auto == 1 && dao.Lic.Tpye != 0 {
+			log.Println("开始执行分辨率测试，测试期间cpu、内存占用会较高，请耐心等待，或关闭自动测试")
+			dao.WS.SendWS(dao.Request{Action: "testResolutionAll"}) //测试分辨率
+		}
 		makeMealsXmlCacheAll()
 	}
 }

@@ -206,7 +206,6 @@ func GetAutoChannelList(category models.IptvCategory) []models.IptvChannelShow {
 	}
 
 	cfg := dao.GetConfig()
-	re := regexp.MustCompile(category.Rules)
 
 	for _, ch := range channelList {
 		if strings.Contains(ch.Name, category.Rules) {
@@ -223,6 +222,12 @@ func GetAutoChannelList(category models.IptvCategory) []models.IptvChannelShow {
 			result = append(result, ch)
 			continue
 		}
+		_, err := regexp.Compile(category.Rules)
+		if err != nil {
+			continue
+		}
+		re := regexp.MustCompile(category.Rules)
+
 		if re.MatchString(ch.Name) {
 			if ch.EpgName != "" {
 				ch.Logo = EpgNameGetLogo(ch.EpgName)

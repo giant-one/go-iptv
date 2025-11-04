@@ -29,7 +29,7 @@ WORKDIR /app
 EXPOSE 80 8080
 
 ENV TZ=Asia/Shanghai
-RUN apk add --no-cache openjdk8 bash curl tzdata sqlite;\
+RUN apk add --no-cache openjdk8 bash curl tzdata sqlite ffmpeg ;\
     cp /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 COPY ./client /client

@@ -10,6 +10,8 @@ type AdminLicenseDto struct {
 	Status    int64  `json:"status"`
 	Online    int64  `json:"online"`
 	Version   string `json:"version"`
+	AutoRes   int64  `json:"auto_res"`
+	DisCh     int64  `json:"dis_ch"`
 }
 
 type Lic struct {
