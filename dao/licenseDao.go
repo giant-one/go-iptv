@@ -168,7 +168,7 @@ func (c *WSClient) heartbeat() {
 			c.lock.Unlock()
 
 			if err != nil {
-				log.Println("⚠️ 心跳失败，尝试重连:", err)
+				log.Println("⚠️ 心跳失败，尝试重连...")
 				c.reconnect()
 			}
 		case <-c.done:
