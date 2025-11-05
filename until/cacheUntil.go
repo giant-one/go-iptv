@@ -123,7 +123,8 @@ func doRebuild(ctx context.Context) {
 			} else {
 				log.Println("分辨率测试成功")
 				log.Println("🚀 重新执行EPG缓存重建任务")
-				CleanAutoCacheAll() //重新执行缓存重建
+				dao.Cache.Clear()      //清除缓存
+				makeMealsXmlCacheAll() //重新生成
 			}
 
 		}
