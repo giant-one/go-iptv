@@ -185,8 +185,10 @@ func initEpg() {
 	dao.DB.AutoMigrate(&models.IptvEpg{})
 	var epgs []models.IptvEpg
 	dao.DB.Model(&models.IptvEpg{}).Find(&epgs)
+	var update bool = false
 	for _, epg := range epgs {
 		if strings.Contains(epg.Name, "-") {
+			update = true
 			if epg.ID <= 18 {
 				epg.Name = strings.SplitN(epg.Name, "-", 2)[1]
 				epg.FromListStr = "0"
@@ -195,5 +197,8 @@ func initEpg() {
 				dao.DB.Delete(&epg)
 			}
 		}
+	}
+	if update {
+		go until.UpdataEpgList()
 	}
 }
