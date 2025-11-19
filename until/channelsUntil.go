@@ -190,7 +190,7 @@ func IsM3UContent(data string) bool {
 	return true
 }
 
-func GetAutoChannelList(category models.IptvCategory) []models.IptvChannelShow {
+func GetAutoChannelList(category models.IptvCategory, show bool) []models.IptvChannelShow {
 
 	var result []models.IptvChannelShow
 
@@ -239,6 +239,9 @@ func GetAutoChannelList(category models.IptvCategory) []models.IptvChannelShow {
 		if re.MatchString(ch.Name) {
 			if ch.EpgName != "" {
 				ch.Logo = EpgNameGetLogo(ch.EpgName)
+				if category.ReName == 1 && !show {
+					ch.Name = ch.EpgName
+				}
 			}
 			if category.Proxy == 1 && cfg.Proxy.Status == 1 {
 				urlMsg := fmt.Sprintf("{\"c\":%d,\"u\":\"%s\"}", category.ID, ch.Url)
@@ -259,10 +262,10 @@ func GetAutoChannelList(category models.IptvCategory) []models.IptvChannelShow {
 	return result
 }
 
-func CaGetChannels(categoryDb models.IptvCategory) []models.IptvChannelShow {
+func CaGetChannels(categoryDb models.IptvCategory, show bool) []models.IptvChannelShow {
 
 	if categoryDb.Type == "auto" {
-		return GetAutoChannelList(categoryDb)
+		return GetAutoChannelList(categoryDb, show)
 	} else {
 		cfg := dao.GetConfig()
 		var channels []models.IptvChannelShow
@@ -275,6 +278,9 @@ func CaGetChannels(categoryDb models.IptvCategory) []models.IptvChannelShow {
 		for i, ch := range channels {
 			if ch.EpgName != "" {
 				channels[i].Logo = EpgNameGetLogo(ch.EpgName)
+				if categoryDb.ReName == 1 && !show {
+					channels[i].Name = ch.EpgName
+				}
 			}
 			if categoryDb.Proxy == 1 && cfg.Proxy.Status == 1 {
 				urlMsg := fmt.Sprintf("{\"c\":%d,\"u\":\"%s\"}", categoryDb.ID, ch.Url)

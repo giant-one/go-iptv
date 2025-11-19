@@ -188,12 +188,17 @@ func initEpg() {
 	var update bool = false
 	for _, epg := range epgs {
 		if strings.Contains(epg.Name, "-") {
-			update = true
 			if epg.ID <= 18 {
 				epg.Name = strings.SplitN(epg.Name, "-", 2)[1]
+				update = true
 				epg.FromListStr = "0"
 				dao.DB.Save(&epg)
 			} else {
+				if strings.SplitN(epg.Name, "-", 2)[0] == "CCTV" {
+					update = false
+					continue
+				}
+				update = true
 				dao.DB.Delete(&epg)
 			}
 		}

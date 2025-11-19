@@ -442,9 +442,9 @@ func GetTxt(id int64) string {
 	for _, category := range categoryList {
 		var channels []models.IptvChannelShow
 		if category.Type != "auto" {
-			dao.DB.Model(&models.IptvChannelShow{}).Where("c_id = ? and status = 1", category.ID).Order("sort asc").Find(&channels)
+			channels = CaGetChannels(category, false)
 		} else {
-			channels = GetAutoChannelList(category)
+			channels = GetAutoChannelList(category, false)
 		}
 		if len(channels) == 0 {
 			continue
@@ -571,7 +571,7 @@ func GetEpg(id int64) dto.XmlTV {
 			dao.DB.Model(&models.IptvChannelShow{}).Where("c_id = ? and status = 1", category.ID).Order("sort asc").Find(&tmpChannels)
 			channels = append(channels, tmpChannels...)
 		} else {
-			channels = GetAutoChannelList(category)
+			channels = GetAutoChannelList(category, false)
 		}
 	}
 

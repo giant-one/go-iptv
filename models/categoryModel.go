@@ -6,6 +6,7 @@ type IptvCategory struct {
 	Enable    int64  `gorm:"column:enable;default:1" json:"enable"`
 	Type      string `gorm:"default:hand;column:type" json:"type"`
 	Proxy     int64  `gorm:"column:proxy" json:"proxy"`
+	ReName    int64  `gorm:"column:rename" json:"rename"`
 	UA        string `gorm:"column:ua" json:"ua"`
 	Sort      int64  `gorm:"column:sort" json:"sort"`
 	ListId    int64  `gorm:"column:list_id;default:0" json:"list_id"`
@@ -26,7 +27,8 @@ type IptvCategoryList struct {
 	UA           string `gorm:"column:ua" json:"ua"`
 	LatestTime   string `gorm:"column:latesttime" json:"latesttime"`
 	AutoCategory int64  `gorm:"column:autocategory" json:"autocategory"`
-	Repeat       int64  `gorm:"column:repeat" json:"repeat"`
+	Repeat       int64  `gorm:"column:repeat" json:"repeat"` //是否去重
+	ReName       int64  `gorm:"column:rename" json:"rename"`
 }
 
 func (IptvCategoryList) TableName() string {

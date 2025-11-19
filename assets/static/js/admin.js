@@ -574,12 +574,14 @@ function getCategoryList(btn) {
 	var cua = $tr.find(".cl-ua").data("value");
 	var ca = $tr.find(".cl-a").data("value");
 	var cr = $tr.find(".cl-r").data("value");
+	var rename = $tr.find(".cl-rename").data("value");
 	$("#clId").val(cid);
 	$("#listname").val(cname);
 	$("#listurl").val(curl);
 	$("#listua").val(cua);
 	$("#autocategory").prop("checked", ca === 1);
 	$("#repeat").prop("checked", cr === 1);
+	$("#clrename").prop("checked", rename === 1);
 }
 function getCategory(btn) {
 	var $tr = $(btn).closest("tr"); 
@@ -589,6 +591,7 @@ function getCategory(btn) {
 	var cua = $tr.find(".ca-ua").data("value");
 	var crules = $tr.find(".ca-rules").data("value");
 	var cproxy = $tr.find(".ca-proxy").data("value");
+	var rename = $tr.find(".ca-rename").data("value");
 	$("#caId").val(cid);
 	$("#caname").val(cname);
 	$("#caua").val(cua);
@@ -600,6 +603,7 @@ function getCategory(btn) {
 	}
 	$("#autoagg").prop("checked", ctype === "auto");
 	$("#caproxy").prop("checked", cproxy === 1);
+	$("#carename").prop("checked", rename === 1);
 }
 function getChannels(id) {
     $("#showcaId").val(id);

@@ -132,7 +132,7 @@ func GetChannels(channel dto.DataReqDto) string {
 		var dataMap = make(map[string][]string)
 		var tmpMap = make(map[string]int64)
 
-		for _, channel := range until.CaGetChannels(v) {
+		for _, channel := range until.CaGetChannels(v, false) {
 			if v.Proxy == 1 && cfg.Proxy.Status == 1 {
 				urlMsg := fmt.Sprintf("{\"c\":%d,\"u\":\"%s\"}", v.ID, channel.Url)
 				msg, err := until.UrlEncrypt(dao.Lic.ID, urlMsg)

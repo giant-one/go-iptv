@@ -37,7 +37,7 @@ func Index(c *gin.Context) {
 	for i, c := range categoryList {
 		var channelType dto.ChannelType
 
-		tmpCh := until.CaGetChannels(c)
+		tmpCh := until.CaGetChannels(c, true)
 		channelType.ChannelCount = int64(len(tmpCh))
 		channelType.Num = int64(i + 1)
 		channelType.Name = c.Name
