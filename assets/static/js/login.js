@@ -54,9 +54,5 @@ function placeholderAnimationIn(parent, action) {
 }
 
 setTimeout(function () {
-    document.body.classList.add('on-start');
-}, 10);
-
-setTimeout(function () {
     document.body.classList.add('document-loaded');
 }, 180);

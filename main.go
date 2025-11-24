@@ -9,10 +9,11 @@ import (
 	"go-iptv/until"
 	"log"
 	"os"
+	"time"
 )
 
 func main() {
-
+	time.Local, _ = time.LoadLocation("Asia/Shanghai") // 设置时区
 	if !until.IsPrivileged() {
 		log.Println("请使用privileged(特权模式、高权限执行容器)运行")
 		return

@@ -56,37 +56,37 @@
 								{{ end }}{{ end }}{{end}}
 								</tbody>
 							</table>
-						<div class="modal fade" id="epgimport" tabindex="-1" role="dialog">
-							<div class="modal-dialog" role="document">
-								<div class="modal-content">
-									<div class="modal-header">
-										<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#eid').val('');$('#epgfromurl').val('');$('#epgfromname').val('');"><span aria-hidden="true">&times;</span></button>
-										<h4 class="modal-title">导入epg源</h4>
+							<div class="modal fade" id="epgimport" tabindex="-1" role="dialog">
+								<div class="modal-dialog" role="document">
+									<div class="modal-content">
+										<div class="modal-header">
+											<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#eid').val('');$('#epgfromurl').val('');$('#epgfromname').val('');"><span aria-hidden="true">&times;</span></button>
+											<h4 class="modal-title">导入epg源</h4>
+										</div>
+										<form method="post" enctype="multipart/form-data">
+											<input type="hidden" id="eid" data-value="" name="eid" value="">
+											<div class="modal-body">
+												<div class="form-group">
+													<label class="control-label">epg源名称:</label>
+													<input type="text" class="form-control" name="epgfromname" id="epgfromname" value="" placeholder="请输入名称">
+												</div>
+												<div class="form-group">
+													<label class="control-label">epg源url地址:</label>
+													<input type="text" class="form-control" name="epgfromurl" id="epgfromurl" value="" placeholder="请输入epg源地址">
+												</div>
+												<div class="form-group">
+													<label class="control-label">User-Agent:</label>
+													<input type="text" class="form-control" name="epgfromua" id="epgfromua" value="" placeholder="Go-http-client/1.1">
+												</div>
+											</div>
+											<div class="modal-footer">
+												<button class="btn btn-default" type="button" name="epgImport" onclick="submitFormPOST(this)">保存</button>
+												<button type="button" class="btn btn-default" data-dismiss="modal" onclick="$('#eid').val('');$('#epgfromurl').val('');$('#epgfromname').val('');">关闭</button>
+											</div>
+										</form>
 									</div>
-									<form method="post" enctype="multipart/form-data">
-										<input type="hidden" id="eid" data-value="" name="eid" value="">
-										<div class="modal-body">
-											<div class="form-group">
-												<label class="control-label">epg源名称:</label>
-												<input type="text" class="form-control" name="epgfromname" id="epgfromname" value="" placeholder="请输入名称">
-											</div>
-											<div class="form-group">
-												<label class="control-label">epg源url地址:</label>
-												<input type="text" class="form-control" name="epgfromurl" id="epgfromurl" value="" placeholder="请输入epg源地址">
-											</div>
-											<div class="form-group">
-												<label class="control-label">User-Agent:</label>
-												<input type="text" class="form-control" name="epgfromua" id="epgfromua" value="" placeholder="Go-http-client/1.1">
-											</div>
-										</div>
-										<div class="modal-footer">
-											<button class="btn btn-default" type="button" name="epgImport" onclick="submitFormPOST(this)">保存</button>
-											<button type="button" class="btn btn-default" data-dismiss="modal" onclick="$('#eid').val('');$('#epgfromurl').val('');$('#epgfromname').val('');">关闭</button>
-										</div>
-									</form>
 								</div>
 							</div>
-						</div>
 						</div>
 					</div>
 				</div>

@@ -2,13 +2,20 @@ package api
 
 import (
 	"go-iptv/dao"
+	"go-iptv/dto"
 	"go-iptv/models"
+	"go-iptv/until"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 func EditUsers(c *gin.Context) {
+	_, ok := until.GetAuthName(c)
+	if !ok {
+		c.JSON(200, dto.NewAdminRedirectDto())
+		return
+	}
 	c.Request.ParseForm()
 	params := c.Request.PostForm
 	for k := range params {
