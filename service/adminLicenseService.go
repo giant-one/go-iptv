@@ -1,11 +1,14 @@
 package service
 
 import (
+	"encoding/json"
 	"go-iptv/dao"
 	"go-iptv/dto"
 	"go-iptv/until"
+	"log"
 	"net/url"
 	"os"
+	"regexp"
 	"strconv"
 )
 
@@ -166,4 +169,76 @@ func EpgFuzz(params url.Values) dto.ReturnJsonDto {
 	}
 	dao.SetConfig(cfg)
 	return dto.ReturnJsonDto{Code: 1, Msg: "设置成功", Type: "success"}
+}
+
+func Register(params url.Values) dto.ReturnJsonDto {
+	name := params.Get("name")
+	pwd := params.Get("pwd")
+	pwd2 := params.Get("pwd2")
+
+	if name == "" || pwd == "" || pwd2 == "" {
+		return dto.ReturnJsonDto{Code: 0, Msg: "用户名或密码不能为空", Type: "danger"}
+	}
+	emailSimple := regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
+	if !emailSimple.MatchString(name) {
+		return dto.ReturnJsonDto{Code: 0, Msg: "邮箱格式不正确", Type: "danger"}
+	}
+
+	if pwd != pwd2 {
+		return dto.ReturnJsonDto{Code: 0, Msg: "两次输入的密码不一致", Type: "danger"}
+	}
+
+	res, err := dao.WS.SendWS(dao.Request{Action: "register", Data: dto.LoginDto{
+		Name: name,
+		Pwd:  pwd,
+		Pwd2: pwd2,
+	}})
+	if err != nil {
+		return dto.ReturnJsonDto{Code: 0, Msg: "连接服务器失败", Type: "danger"}
+	} else if res.Code != 1 {
+		return dto.ReturnJsonDto{Code: 0, Msg: res.Msg, Type: "danger"}
+	}
+
+	return dto.ReturnJsonDto{Code: 1, Msg: res.Msg, Type: "success"}
+}
+
+func Login(params url.Values) dto.ReturnJsonDto {
+	name := params.Get("name")
+	pwd := params.Get("pwd")
+
+	if name == "" || pwd == "" {
+		return dto.ReturnJsonDto{Code: 0, Msg: "用户名或密码不能为空", Type: "danger"}
+	}
+
+	res, err := dao.WS.SendWS(dao.Request{Action: "login", Data: dto.LoginDto{
+		Name: name,
+		Pwd:  pwd,
+	}})
+	if err != nil {
+		return dto.ReturnJsonDto{Code: 0, Msg: "连接服务器失败", Type: "danger"}
+	} else if res.Code != 1 {
+		return dto.ReturnJsonDto{Code: 0, Msg: res.Msg, Type: "danger"}
+	} else {
+		if err := json.Unmarshal(res.Data, &dao.Lic); err != nil {
+			log.Println("⚠️ 无法解析服务器返回的key:", err)
+			return dto.ReturnJsonDto{Code: 0, Msg: "连接服务器失败", Type: "danger"}
+		}
+	}
+
+	return dto.ReturnJsonDto{Code: 1, Msg: "登录成功", Type: "success"}
+}
+
+func Logout() dto.ReturnJsonDto {
+	res, err := dao.WS.SendWS(dao.Request{Action: "logout"})
+	if err != nil {
+		return dto.ReturnJsonDto{Code: 0, Msg: "连接服务器失败", Type: "danger"}
+	} else if res.Code != 1 {
+		return dto.ReturnJsonDto{Code: 0, Msg: res.Msg, Type: "danger"}
+	} else {
+		if err := json.Unmarshal(res.Data, &dao.Lic); err != nil {
+			log.Println("⚠️ 无法解析服务器返回的key:", err)
+			return dto.ReturnJsonDto{Code: 0, Msg: "连接服务器失败", Type: "danger"}
+		}
+	}
+	return dto.ReturnJsonDto{Code: 1, Msg: "退出成功", Type: "success"}
 }

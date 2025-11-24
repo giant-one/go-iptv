@@ -36,6 +36,8 @@ func License(c *gin.Context) {
 				log.Println("版本信息解析错误:", err)
 			}
 		}
+
+		pageData.Lic = dao.Lic
 		cfg := dao.GetConfig()
 		pageData.Proxy = cfg.Proxy.Status
 		pageData.ProxyAddr = cfg.Proxy.PAddr
@@ -50,8 +52,6 @@ func License(c *gin.Context) {
 	if dao.IsRunning() {
 		pageData.Status = 1
 	}
-
-	pageData.Lic = dao.Lic
 
 	c.HTML(200, "admin_license.html", pageData)
 }

@@ -18,6 +18,16 @@ type AdminLicenseDto struct {
 type Lic struct {
 	ID     string `json:"id"`
 	Tpye   int64  `json:"type"`
+	Status int64  `json:"status"`
+	Count  int64  `json:"count"`
 	Exp    int64  `json:"exp"`
+	Msg    string `json:"msg"`
+	Name   string `json:"name"`
 	ExpStr string `json:"exp_str"`
+}
+
+type LoginDto struct {
+	Name string `json:"name"`
+	Pwd  string `json:"pwd"`
+	Pwd2 string `json:"pwd2"`
 }

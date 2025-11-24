@@ -32,6 +32,12 @@ func License(c *gin.Context) {
 			res = service.DisCh(params)
 		case "epgFuzz":
 			res = service.EpgFuzz(params)
+		case "register":
+			res = service.Register(params)
+		case "login":
+			res = service.Login(params)
+		case "logout":
+			res = service.Logout()
 		}
 
 	}

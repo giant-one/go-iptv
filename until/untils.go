@@ -72,7 +72,7 @@ func GetUrlData(url string, ua ...string) string {
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		log.Println("err1", err)
+		log.Println("HTTP请求创建失败: ", err)
 		return ""
 	}
 
@@ -81,14 +81,14 @@ func GetUrlData(url string, ua ...string) string {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Println("err2", err)
+		log.Println("HTTP请求失败:", err)
 		return ""
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Println("err3", err)
+		log.Println("读取响应失败:", err)
 		return ""
 	}
 
