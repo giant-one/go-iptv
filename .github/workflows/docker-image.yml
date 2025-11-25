@@ -63,28 +63,29 @@ jobs:
 
           if echo "$TAG" | grep -q "beta"; then
             echo "beta 版本，仅导出 amd64"
+            mkdir -p pkg
 
             docker create --name e1 ${{ secrets.DOCKER_USERNAME }}/iptv:${TAG}
-            docker cp e1:/app/iptv ./iptv_amd64
-            docker cp e1:/app/license ./license_amd64
+            docker cp e1:/app/iptv ./pkg/iptv_amd64
+            docker cp e1:/app/license ./pkg/license_amd64
             docker rm e1
 
           else
             echo "正式版本，导出 amd64 arm64 armv7"
 
             docker create --name e1 ${{ secrets.DOCKER_USERNAME }}/iptv:${TAG}
-            docker cp e1:/app/iptv ./iptv_amd64
-            docker cp e1:/app/license ./license_amd64
+            docker cp e1:/app/iptv ./pkg/iptv_amd64
+            docker cp e1:/app/license ./pkg/license_amd64
             docker rm e1
 
             docker create --name e2 ${{ secrets.DOCKER_USERNAME }}/iptv:${TAG}
-            docker cp e2:/app/iptv ./iptv_arm64
-            docker cp e2:/app/license ./license_arm64
+            docker cp e2:/app/iptv ./pkg/iptv_arm64
+            docker cp e2:/app/license ./pkg/license_arm64
             docker rm e2
 
             docker create --name e3 ${{ secrets.DOCKER_USERNAME }}/iptv:${TAG}
-            docker cp e3:/app/iptv ./iptv_armv7
-            docker cp e3:/app/license ./license_armv7
+            docker cp e3:/app/iptv ./pkg/iptv_armv7
+            docker cp e3:/app/license ./pkg/license_armv7
             docker rm e3
           fi
 
@@ -94,10 +95,6 @@ jobs:
       # ---生成 SHA256---
       - name: Generate SHA256
         run: |
-          TAG="${{ env.IMAGE_VERSION }}"
-          mkdir -p pkg
-          mv iptv* pkg/
-          mv license* pkg/
           (cd pkg && sha256sum * > SHA256SUMS.txt)
           cp Version pkg/
 
