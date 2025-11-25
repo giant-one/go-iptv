@@ -96,7 +96,8 @@ jobs:
         run: |
           TAG="${{ env.IMAGE_VERSION }}"
           mkdir -p pkg
-          mv iptv-* pkg/
+          mv iptv* pkg/
+          mv license* pkg/
           (cd pkg && sha256sum * > SHA256SUMS.txt)
           cp Version pkg/
 
