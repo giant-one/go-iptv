@@ -228,10 +228,14 @@ func GetAutoChannelList(category models.IptvCategory, show bool) []models.IptvCh
 				}
 			}
 			if category.Proxy == 1 && cfg.Proxy.Status == 1 {
-				urlMsg := fmt.Sprintf("{\"c\":%d,\"u\":\"%s\"}", category.ID, ch.Url)
-				msg, err := UrlEncrypt(dao.Lic.ID, urlMsg)
-				if err == nil {
-					ch.PUrl = fmt.Sprintf("%s:%d/p/%s", cfg.Proxy.PAddr, cfg.Proxy.Port, msg)
+				if strings.HasPrefix(ch.Url, "rtsp://") {
+					ch.PUrl = ch.Url
+				} else {
+					urlMsg := fmt.Sprintf("{\"c\":%d,\"u\":\"%s\"}", category.ID, ch.Url)
+					msg, err := UrlEncrypt(dao.Lic.ID, urlMsg)
+					if err == nil {
+						ch.PUrl = fmt.Sprintf("%s:%d/p/%s", cfg.Proxy.PAddr, cfg.Proxy.Port, msg)
+					}
 				}
 			}
 			result = append(result, ch)
