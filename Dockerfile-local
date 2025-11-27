@@ -37,7 +37,7 @@ COPY ./ChangeLog.md /app/ChangeLog.md
 COPY ./Version /app/Version
 COPY ./alias.json /app/alias.json
 COPY ./dictionary.txt /app/dictionary.txt
-COPY ./license_all/Version /app/Version_lic
+COPY ./license_all/Version_lic /app/Version_lic
 
 COPY --from=builder /app/iptv .
 COPY ./license .
