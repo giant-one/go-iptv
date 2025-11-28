@@ -22,7 +22,11 @@ func RestartLic() bool {
 	log.Println("♻️ 正在重启  授权服务  服务...")
 
 	r := GetUrlData("http://127.0.0.1:82/licRestart")
-	if strings.TrimSpace(r) == "" || strings.TrimSpace(r) != "OK" {
+	if strings.TrimSpace(r) == "" {
+		log.Println("升级服务未启动")
+		return false
+	}
+	if strings.TrimSpace(r) != "OK" {
 		return false
 	}
 
