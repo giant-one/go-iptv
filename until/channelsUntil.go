@@ -1,8 +1,10 @@
 package until
 
 import (
+	"bufio"
 	"fmt"
 	"go-iptv/dao"
+	"go-iptv/dto"
 	"go-iptv/models"
 	"log"
 	"regexp"
@@ -57,10 +59,11 @@ func ConvertListFormat(srclist string) string {
 
 // addChannelList 添加频道到数据库
 
-func ConvertDataToMap(data string) map[string]string {
+func ConvertDataToMap(data string, group bool) map[string]dto.ChannelDto {
 	lines := strings.Split(data, "\n")
-	result := make(map[string]string)
+	result := make(map[string]dto.ChannelDto)
 	currentGenre := ""
+	groupName := ""
 
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
@@ -68,17 +71,32 @@ func ConvertDataToMap(data string) map[string]string {
 			continue
 		}
 
+		if strings.Contains(line, ",#group#") {
+			if group {
+				name := strings.SplitN(line, ",#group#", 2)[0]
+				if name != "" {
+					groupName = "[" + name + "]"
+				}
+			}
+			continue
+		}
+
 		if strings.Contains(line, "#genre#") {
-			currentGenre = strings.TrimSuffix(line, ",#genre#")
-			// 如果当前 genre 不存在，则初始化为空字符串
+			currentGenre = strings.SplitN(line, ",#genre#", 2)[0] + groupName
+
 			if _, exists := result[currentGenre]; !exists {
-				result[currentGenre] = ""
+				result[currentGenre] = dto.ChannelDto{
+					Ku9: strings.SplitN(line, ",#genre#", 2)[1],
+				}
 			}
 		} else if currentGenre != "" {
-			if result[currentGenre] != "" {
-				result[currentGenre] += "\n"
+			tmp := result[currentGenre]
+			if result[currentGenre].SrcList != "" {
+				// 取出副本
+				tmp.SrcList += "\n"
 			}
-			result[currentGenre] += line
+			tmp.SrcList += line
+			result[currentGenre] = tmp
 		}
 	}
 
@@ -539,4 +557,165 @@ func RemoveCaFromEpg(caId int64) {
 				','
 			)
 		`, caIdStr))
+}
+
+func GetTxt(id int64) string {
+	var res string
+
+	txtCaCheKey := "rssMealTxt_" + strconv.FormatInt(id, 10)
+	if dao.Cache.Exists(txtCaCheKey) {
+		cacheData, err := dao.Cache.GetNotExpired(txtCaCheKey)
+		if err == nil {
+			return string(cacheData)
+		}
+	}
+
+	var meal models.IptvMeals
+	if err := dao.DB.Model(&models.IptvMeals{}).Where("id = ? and status = 1", id).First(&meal).Error; err != nil {
+		return res
+	}
+	categoryIdList := strings.Split(meal.Content, ",")
+	var categoryList []models.IptvCategory
+	if err := dao.DB.Model(&models.IptvCategory{}).Where("id in (?) and enable = 1", categoryIdList).Order("sort asc").Find(&categoryList).Error; err != nil {
+		return res
+	}
+	cfg := dao.GetConfig()
+
+	tmpGroup := make(map[string]string)
+
+	for _, category := range categoryList {
+		caGroup, caName := GetCaName(category.Name)
+		if caGroup == "" {
+			caGroup = "default"
+		}
+
+		var channels []models.IptvChannelShow
+		if category.Type != "auto" {
+			channels = CaGetChannels(category, false)
+		} else {
+			channels = GetAutoChannelList(category, false)
+		}
+		// channels := CaGetChannels(category, false)
+		if len(channels) == 0 {
+			continue
+		}
+		if category.Ku9 != "" {
+			tmpGroup[caGroup] += caName + ",#genre#," + category.Ku9 + "\n"
+		} else {
+			if category.UA == "" {
+				tmpGroup[caGroup] += caName + ",#genre#\n"
+			} else {
+				tmpGroup[caGroup] += fmt.Sprintf("%s,#genre#,HEADERS={\"User-Agent\":\"%s\"\n", caName, category.UA)
+			}
+		}
+
+		for _, channel := range channels {
+			if channel.Status == 1 {
+				if category.Proxy == 1 && cfg.Proxy.Status == 1 {
+					urlMsg := fmt.Sprintf("{\"c\":%d,\"u\":\"%s\"}", category.ID, channel.Url)
+					msg, err := UrlEncrypt(dao.Lic.ID, urlMsg)
+					if err == nil {
+						channel.PUrl = fmt.Sprintf("%s:%d/p/%s", cfg.Proxy.PAddr, cfg.Proxy.Port, msg)
+						tmpGroup[caGroup] += channel.Name + "," + channel.PUrl + "\n"
+						continue
+					}
+				}
+				tmpGroup[caGroup] += channel.Name + "," + channel.Url + "\n"
+			}
+		}
+		tmpGroup[caGroup] += "\n"
+	}
+
+	for k, v := range tmpGroup {
+		if k == "default" {
+			res += "\n" + v
+			continue
+		}
+		res += "\n" + k + ",#group#\n\n" + v
+	}
+
+	if err := dao.Cache.Set(txtCaCheKey, []byte(res)); err != nil {
+		log.Println("epg缓存设置失败:", err)
+		dao.Cache.Delete(txtCaCheKey)
+	}
+
+	return res
+}
+
+func Txt2M3u8(txtData, host, token string) string {
+
+	epgURL := host + "/epg/" + token + "/e.xml"
+	logoBase := host + "/logo/"
+
+	var builder strings.Builder
+	builder.WriteString(fmt.Sprintf("#EXTM3U url-tvg=\"%s\"\n\n", epgURL))
+
+	scanner := bufio.NewScanner(strings.NewReader(txtData))
+	currentGroup := "未分组"
+	groupName := ""
+	lineNum := 0
+
+	for scanner.Scan() {
+		lineNum++
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+
+		if strings.Contains(line, ",#group#") {
+			name := strings.SplitN(line, ",#group#", 2)[0]
+			if name != "" {
+				groupName = name + "-"
+			}
+			continue
+		}
+
+		// 检查是否为分组行（如 “中央台,#genre#”）
+		if strings.HasSuffix(line, "#genre#") {
+			currentGroup = groupName + strings.SplitN(line, ",#genre#", 2)[0]
+			continue
+		}
+
+		// 普通频道行
+		parts := strings.SplitN(line, ",", 2)
+		if len(parts) != 2 {
+			fmt.Printf("Txt2M3u8: 第 %d 行格式错误: %s\n", lineNum, line)
+			continue
+		}
+
+		name := strings.TrimSpace(parts[0])
+		url := strings.TrimSpace(parts[1])
+		epgName := GetEpgName(name)
+		var logo string
+		if epgName != "" {
+			logo = fmt.Sprintf("%s%s.png", strings.TrimRight(logoBase, "/")+"/", epgName)
+		}
+
+		// ✅ 生成 #EXTINF 信息
+		extinf := fmt.Sprintf(`#EXTINF:-1 tvg-id="%s" tvg-name="%s" tvg-logo="%s" group-title="%s",%s`,
+			name, name, logo, currentGroup, name)
+		builder.WriteString(extinf + "\n")
+		builder.WriteString(url + "\n\n")
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Println("Txt2M3u8: m3u8解析出错:", err)
+	}
+
+	return builder.String()
+}
+
+func GetCaName(s string) (content string, cleaned string) {
+	re := regexp.MustCompile(`\[(.*?)\]`)
+	m := re.FindStringSubmatch(s)
+
+	if len(m) > 1 {
+		content = m[1]                       // 中括号内内容
+		cleaned = re.ReplaceAllString(s, "") // 移除整个 [xxx]
+	} else {
+		content = ""
+		cleaned = s
+	}
+
+	return
 }

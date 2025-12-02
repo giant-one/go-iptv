@@ -1,7 +1,6 @@
 package until
 
 import (
-	"bufio"
 	"encoding/json"
 	"encoding/xml"
 	"errors"
@@ -415,119 +414,6 @@ func SyncEpgs(fromId int64, epgs []models.IptvEpg, newAdd bool) (bool, error) {
 		return true, nil
 	}
 	return false, errors.New("无新增数据")
-}
-
-func GetTxt(id int64) string {
-	var res string
-
-	txtCaCheKey := "rssMealTxt_" + strconv.FormatInt(id, 10)
-	if dao.Cache.Exists(txtCaCheKey) {
-		cacheData, err := dao.Cache.GetNotExpired(txtCaCheKey)
-		if err == nil {
-			return string(cacheData)
-		}
-	}
-
-	var meal models.IptvMeals
-	if err := dao.DB.Model(&models.IptvMeals{}).Where("id = ? and status = 1", id).First(&meal).Error; err != nil {
-		return res
-	}
-	categoryIdList := strings.Split(meal.Content, ",")
-	var categoryList []models.IptvCategory
-	if err := dao.DB.Model(&models.IptvCategory{}).Where("id in (?) and enable = 1", categoryIdList).Order("sort asc").Find(&categoryList).Error; err != nil {
-		return res
-	}
-	cfg := dao.GetConfig()
-
-	for _, category := range categoryList {
-		var channels []models.IptvChannelShow
-		if category.Type != "auto" {
-			channels = CaGetChannels(category, false)
-		} else {
-			channels = GetAutoChannelList(category, false)
-		}
-		if len(channels) == 0 {
-			continue
-		}
-		res += category.Name + ",#genre#\n"
-		for _, channel := range channels {
-			if channel.Status == 1 {
-				if category.Proxy == 1 && cfg.Proxy.Status == 1 {
-					urlMsg := fmt.Sprintf("{\"c\":%d,\"u\":\"%s\"}", category.ID, channel.Url)
-					msg, err := UrlEncrypt(dao.Lic.ID, urlMsg)
-					if err == nil {
-						channel.PUrl = fmt.Sprintf("%s:%d/p/%s", cfg.Proxy.PAddr, cfg.Proxy.Port, msg)
-						res += channel.Name + "," + channel.PUrl + "\n"
-						continue
-					}
-				}
-				res += channel.Name + "," + channel.Url + "\n"
-			}
-
-		}
-	}
-
-	if err := dao.Cache.Set(txtCaCheKey, []byte(res)); err != nil {
-		log.Println("epg缓存设置失败:", err)
-		dao.Cache.Delete(txtCaCheKey)
-	}
-
-	return res
-}
-
-func Txt2M3u8(txtData, host, token string) string {
-
-	epgURL := host + "/epg/" + token + "/e.xml" // ✅ 可自行修改 EPG 地址
-	logoBase := host + "/logo/"                 // ✅ 可自行修改 logo 前缀
-
-	var builder strings.Builder
-	builder.WriteString(fmt.Sprintf("#EXTM3U url-tvg=\"%s\"\n\n", epgURL))
-
-	scanner := bufio.NewScanner(strings.NewReader(txtData))
-	currentGroup := "未分组"
-	lineNum := 0
-
-	for scanner.Scan() {
-		lineNum++
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			continue
-		}
-
-		// 检查是否为分组行（如 “中央台,#genre#”）
-		if strings.HasSuffix(line, "#genre#") {
-			group := strings.TrimSuffix(line, ",#genre#")
-			currentGroup = strings.TrimSpace(group)
-			continue
-		}
-
-		// 普通频道行
-		parts := strings.SplitN(line, ",", 2)
-		if len(parts) != 2 {
-			fmt.Printf("Txt2M3u8: 第 %d 行格式错误: %s\n", lineNum, line)
-			continue
-		}
-
-		name := strings.TrimSpace(parts[0])
-		url := strings.TrimSpace(parts[1])
-		epgName := GetEpgName(name)
-		var logo string
-		if epgName != "" {
-			logo = fmt.Sprintf("%s%s.png", strings.TrimRight(logoBase, "/")+"/", epgName)
-		}
-
-		// ✅ 生成 #EXTINF 信息
-		extinf := fmt.Sprintf(`#EXTINF:-1 tvg-id="%s" tvg-name="%s" tvg-logo="%s" group-title="%s",%s`,
-			name, name, logo, currentGroup, name)
-		builder.WriteString(extinf + "\n")
-		builder.WriteString(url + "\n\n")
-	}
-
-	if err := scanner.Err(); err != nil {
-		log.Println("Txt2M3u8: m3u8解析出错:", err)
-	}
-
-	return builder.String()
 }
 
 func GetEpg(id int64) dto.XmlTV {

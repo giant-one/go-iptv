@@ -90,6 +90,8 @@ func AddList(params url.Values) dto.ReturnJsonDto {
 	ua := params.Get("listua")
 	clId := params.Get("clId")
 	autocategory := params.Get("autocategory")
+	autogroup := params.Get("autogroup")
+	ku9 := params.Get("ku9")
 	repeat := params.Get("repeat")
 	rename := params.Get("rename")
 
@@ -97,7 +99,7 @@ func AddList(params url.Values) dto.ReturnJsonDto {
 		return dto.ReturnJsonDto{Code: 0, Msg: "请输入频道列表", Type: "danger"}
 	}
 
-	if !until.IsSafe(listName) || !until.IsSafe(autocategory) || !until.IsSafe(clId) {
+	if !until.IsSafe(listName) || !until.IsSafe(autocategory) || !until.IsSafe(autogroup) || !until.IsSafe(clId) {
 		return dto.ReturnJsonDto{Code: 0, Msg: "输入不合法", Type: "danger"}
 	}
 
@@ -127,6 +129,12 @@ func AddList(params url.Values) dto.ReturnJsonDto {
 
 	if autocategory == "on" || autocategory == "1" || autocategory == "true" {
 		iptvCategoryList.AutoCategory = 1
+		if autogroup == "on" || autogroup == "1" || autogroup == "true" {
+			iptvCategoryList.AutoGroup = 1
+		}
+		if ku9 == "on" || ku9 == "1" || ku9 == "true" {
+			iptvCategoryList.Ku9 = 1
+		}
 	}
 
 	if rename == "on" || rename == "1" || rename == "true" {
@@ -182,7 +190,10 @@ func AddList(params url.Values) dto.ReturnJsonDto {
 			dao.DB.Model(&models.IptvCategoryList{}).Create(&iptvCategoryList)
 		}
 
-		return GenreChannels(urlData, iptvCategoryList, doRepeat)
+		if iptvCategoryList.AutoGroup == 1 {
+			return GenreChannels(urlData, iptvCategoryList, doRepeat, true)
+		}
+		return GenreChannels(urlData, iptvCategoryList, doRepeat, false)
 	} else {
 		iptvCategoryList.LatestTime = time.Now().Format("2006-01-02 15:04:05")
 		if iptvCategoryList.ID != 0 {
@@ -301,7 +312,10 @@ func UpdateList(params url.Values) dto.ReturnJsonDto {
 				return dto.ReturnJsonDto{Code: 0, Msg: fmt.Sprintf("更新列表 %s 失败\n", iptvCategoryList.Name), Type: "danger"}
 			}
 		}
-		return GenreChannels(urlData, iptvCategoryList, doRepeat)
+		if iptvCategoryList.AutoGroup == 1 {
+			return GenreChannels(urlData, iptvCategoryList, doRepeat, true)
+		}
+		return GenreChannels(urlData, iptvCategoryList, doRepeat, false)
 	} else {
 		dao.DB.Model(&models.IptvCategoryList{}).Where("id = ?", listId).Updates(updata)
 		var oldC models.IptvCategory
@@ -513,9 +527,9 @@ func SubmitSave(params url.Values) dto.ReturnJsonDto {
 	if err := dao.DB.Model(&models.IptvCategory{}).Where("id = ?", categoryId).First(&category).Error; err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "未找到当前记录", Type: "danger"}
 	}
-	if category.Type == "auto" {
-		return dto.ReturnJsonDto{Code: 0, Msg: "聚合分类不允许修改", Type: "danger"}
-	}
+	// if category.Type == "auto" {
+	// 	return dto.ReturnJsonDto{Code: 0, Msg: "聚合分类不允许修改", Type: "danger"}
+	// }
 
 	if category.Sort < 0 {
 		return dto.ReturnJsonDto{Code: 0, Msg: "默认分类不允许修改", Type: "danger"}
@@ -580,9 +594,9 @@ func SaveChannelsOne(params url.Values) dto.ReturnJsonDto {
 	return dto.ReturnJsonDto{Code: 1, Msg: "保存成功", Type: "success"}
 }
 
-func GenreChannels(srclist string, caList models.IptvCategoryList, doRepeat bool) dto.ReturnJsonDto {
+func GenreChannels(srclist string, caList models.IptvCategoryList, doRepeat, group bool) dto.ReturnJsonDto {
 
-	data := until.ConvertDataToMap(srclist)
+	data := until.ConvertDataToMap(srclist, group)
 	var repeatCount int
 	for genreName, genreList := range data {
 		genreName = strings.TrimSpace(genreName)
@@ -606,12 +620,15 @@ func GenreChannels(srclist string, caList models.IptvCategoryList, doRepeat bool
 				UA:     caList.UA,
 				ReName: caList.ReName,
 			}
+			if caList.Ku9 == 1 {
+				category.Ku9 = genreList.Ku9
+			}
 
 			if err := dao.DB.Create(&category).Error; err != nil {
 				return dto.ReturnJsonDto{Code: 0, Msg: fmt.Sprintf("新增分类 %s 失败\n", categoryName), Type: "danger"}
 			}
 			go until.SyncCaToEpg(category.ID)
-			a, err := until.AddChannelList(genreList, category.ID, caList.ID, doRepeat)
+			a, err := until.AddChannelList(genreList.SrcList, category.ID, caList.ID, doRepeat)
 			if err != nil {
 				log.Println(fmt.Sprintf("新增分类 %s 失败\n", categoryName), err)
 				continue
@@ -619,7 +636,7 @@ func GenreChannels(srclist string, caList models.IptvCategoryList, doRepeat bool
 			repeatCount += a
 			continue
 		}
-		a, err := until.AddChannelList(genreList, category.ID, caList.ID, doRepeat)
+		a, err := until.AddChannelList(genreList.SrcList, category.ID, caList.ID, doRepeat)
 		if err != nil {
 			log.Println(fmt.Sprintf("新增分类 %s 失败\n", categoryName), err)
 			continue
@@ -752,19 +769,20 @@ func UploadPayList(c *gin.Context) dto.ReturnJsonDto {
 		}
 	}
 	caList := models.IptvCategoryList{ID: 0, Name: listName, UA: "", ReName: 1}
-	return GenreChannels(urlData, caList, false)
+	return GenreChannels(urlData, caList, false, true)
 }
 
 func SaveCategory(params url.Values) dto.ReturnJsonDto {
 	caId := params.Get("caId")
 	caname := params.Get("caname")
 	caua := params.Get("caua")
-	autoagg := params.Get("autoagg")
-	rules := params.Get("rules")
+	// autoagg := params.Get("autoagg")
+	// rules := params.Get("rules")
+	ku9 := params.Get("ku9")
 	proxy := params.Get("caproxy")
 	rename := params.Get("rename")
 
-	if caname == "" || !until.IsSafe(caname) || !until.IsSafe(autoagg) || !until.IsSafe(proxy) {
+	if caname == "" || !until.IsSafe(caname) || !until.IsSafe(proxy) {
 		return dto.ReturnJsonDto{Code: 0, Msg: "参数错误或非法参数", Type: "danger"}
 	}
 
@@ -781,11 +799,11 @@ func SaveCategory(params url.Values) dto.ReturnJsonDto {
 
 		var maxSort int64
 		dao.DB.Model(&models.IptvCategory{}).Select("IFNULL(MAX(sort),0)").Scan(&maxSort)
-		var new = models.IptvCategory{Name: caname, Type: "user", Sort: maxSort + 1, UA: caua}
-		if autoagg == "1" || autoagg == "true" || autoagg == "on" {
-			new.Type = "auto"
-			new.Rules = rules
-		}
+		var new = models.IptvCategory{Name: caname, Type: "user", Sort: maxSort + 1, UA: caua, Ku9: ku9}
+		// if autoagg == "1" || autoagg == "true" || autoagg == "on" {
+		// 	new.Type = "auto"
+		// 	new.Rules = rules
+		// }
 
 		if proxy == "1" || proxy == "true" || proxy == "on" {
 			new.Proxy = 1
@@ -794,12 +812,12 @@ func SaveCategory(params url.Values) dto.ReturnJsonDto {
 			new.ReName = 1
 		}
 		dao.DB.Model(&models.IptvCategory{}).Create(&new)
-		if new.Type == "auto" {
-			go until.CleanAutoCacheAll()
-		} else {
-			go until.SyncCaToEpg(new.ID)
-			go until.CleanMealsTxtCacheAll()
-		}
+		// if new.Type == "auto" {
+		// 	go until.CleanAutoCacheAll()
+		// } else {
+		go until.SyncCaToEpg(new.ID)
+		go until.CleanMealsTxtCacheAll()
+		// }
 	} else {
 		caIdInt, err := strconv.ParseInt(caId, 10, 64)
 		if err != nil {
@@ -811,12 +829,13 @@ func SaveCategory(params url.Values) dto.ReturnJsonDto {
 		}
 		ca.Name = caname
 		ca.UA = caua
+		ca.Ku9 = ku9
 		ca.Type = "user"
-		if autoagg == "1" || autoagg == "true" || autoagg == "on" {
-			ca.Type = "auto"
-			ca.Rules = rules
-			dao.DB.Model(&models.IptvChannel{}).Delete(&models.IptvChannel{}, "c_id = ?", ca.ID)
-		}
+		// if autoagg == "1" || autoagg == "true" || autoagg == "on" {
+		// 	ca.Type = "auto"
+		// 	ca.Rules = rules
+		// 	dao.DB.Model(&models.IptvChannel{}).Delete(&models.IptvChannel{}, "c_id = ?", ca.ID)
+		// }
 		if proxy == "1" || proxy == "true" || proxy == "on" {
 			ca.Proxy = 1
 		} else {
@@ -834,17 +853,18 @@ func SaveCategory(params url.Values) dto.ReturnJsonDto {
 			"rules":  ca.Rules,
 			"proxy":  ca.Proxy,
 			"rename": ca.ReName,
+			"ku9":    ca.Ku9,
 		})
 
 		proxyCaCheck := "proxyCaCheck_" + strconv.FormatInt(caIdInt, 10)
 		dao.Cache.Delete(proxyCaCheck)
 
-		if ca.Type == "auto" {
-			go until.RemoveCaFromEpg(caIdInt)
-			go until.CleanAutoCacheAll()
-		} else {
-			go until.CleanMealsTxtCacheAll()
-		}
+		// if ca.Type == "auto" {
+		// 	go until.RemoveCaFromEpg(caIdInt)
+		// 	go until.CleanAutoCacheAll()
+		// } else {
+		go until.CleanMealsTxtCacheAll()
+		// }
 	}
 	return dto.ReturnJsonDto{Code: 1, Msg: "操作成功", Type: "success"}
 }

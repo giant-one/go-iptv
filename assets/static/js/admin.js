@@ -595,15 +595,18 @@ function getCategory(btn) {
 	var crules = $tr.find(".ca-rules").data("value");
 	var cproxy = $tr.find(".ca-proxy").data("value");
 	var rename = $tr.find(".ca-rename").data("value");
+	var ku9 = $tr.find(".ca-ku9").data("value");
+
 	$("#caId").val(cid);
 	$("#caname").val(cname);
 	$("#caua").val(cua);
 	$("#rules").val(crules);
-	if (ctype === "auto") {
-		document.getElementById('rules').disabled = false;
-	}else{
-		document.getElementById('rules').disabled = true;
-	}
+	$("#ku9").val(ku9);
+	// if (ctype === "auto") {
+	// 	document.getElementById('rules').disabled = false;
+	// }else{
+	// 	document.getElementById('rules').disabled = true;
+	// }
 	$("#autoagg").prop("checked", ctype === "auto");
 	$("#caproxy").prop("checked", cproxy === 1);
 	$("#carename").prop("checked", rename === 1);

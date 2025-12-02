@@ -98,31 +98,31 @@ func UpdateList() {
 	}
 
 	client := &http.Client{}
-	for _, v := range lists {
-		req, err := http.NewRequest("GET", strings.TrimSpace(v.Url), nil)
+	for _, list := range lists {
+		req, err := http.NewRequest("GET", strings.TrimSpace(list.Url), nil)
 		if err != nil {
-			log.Println("更新频道列表失败--->创建请求错误:: ", err.Error(), " URL: ", v.Url)
+			log.Println("更新频道列表失败--->创建请求错误:: ", err.Error(), " URL: ", list.Url)
 			continue
 		}
 
 		// 添加自定义 User-Agent
-		req.Header.Set("User-Agent", v.UA)
+		req.Header.Set("User-Agent", list.UA)
 
 		resp, err := client.Do(req)
 		if err != nil {
-			log.Println("更新频道列表失败--->无法访问url: ", err.Error(), " URL: ", v.Url)
+			log.Println("更新频道列表失败--->无法访问url: ", err.Error(), " URL: ", list.Url)
 			continue
 		}
 		defer resp.Body.Close()
 
 		if resp.StatusCode != 200 {
-			log.Println("更新频道列表失败--->读取响应失败-状态码：", resp.StatusCode, " URL: ", v.Url)
+			log.Println("更新频道列表失败--->读取响应失败-状态码：", resp.StatusCode, " URL: ", list.Url)
 			continue
 		}
 
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			log.Println("更新频道列表失败--->读取响应失败：", " URL: ", v.Url)
+			log.Println("更新频道列表失败--->读取响应失败：", " URL: ", list.Url)
 			continue
 		}
 
@@ -133,7 +133,7 @@ func UpdateList() {
 		}
 
 		var doRepeat = false
-		if v.Repeat == 1 {
+		if list.Repeat == 1 {
 			doRepeat = true
 		}
 
@@ -142,7 +142,7 @@ func UpdateList() {
 		}
 
 		var oldC models.IptvCategory
-		err = dao.DB.Model(&models.IptvCategory{}).Where("list_id = ?", v.ID).First(&oldC).Error
+		err = dao.DB.Model(&models.IptvCategory{}).Where("list_id = ?", list.ID).First(&oldC).Error
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				continue
@@ -151,25 +151,28 @@ func UpdateList() {
 			continue
 		}
 
-		if v.AutoCategory == 1 {
+		if list.AutoCategory == 1 {
 			if !strings.Contains(urlData, "#genre#") {
 				updata["autocategory"] = 0
 				var oldC models.IptvCategory
-				dao.DB.Model(&models.IptvCategory{}).Where("list_id = ?", v.ID).First(&oldC)
-				until.AddChannelList(urlData, oldC.ID, v.ID, doRepeat)
+				dao.DB.Model(&models.IptvCategory{}).Where("list_id = ?", list.ID).First(&oldC)
+				until.AddChannelList(urlData, oldC.ID, list.ID, doRepeat)
 			}
-			GenreChannels(v.Name, urlData, v.UA, v.ID, doRepeat)
+			if list.AutoGroup == 1 {
+				GenreChannels(urlData, list, doRepeat, true)
+			}
+			GenreChannels(urlData, list, doRepeat, false)
 		} else {
-			until.AddChannelList(urlData, oldC.ID, v.ID, doRepeat)
+			until.AddChannelList(urlData, oldC.ID, list.ID, doRepeat)
 		}
-		dao.DB.Model(&models.IptvCategoryList{}).Where("id = ?", v.ID).Updates(updata)
+		dao.DB.Model(&models.IptvCategoryList{}).Where("id = ?", list.ID).Updates(updata)
 	}
 	log.Println("定时执行更新频道任务结束")
 }
 
-func GenreChannels(listName, srclist, ua string, listId int64, doRepeat bool) {
+func GenreChannels(srclist string, list models.IptvCategoryList, doRepeat, group bool) {
 
-	data := until.ConvertDataToMap(srclist)
+	data := until.ConvertDataToMap(srclist, group)
 
 	for genreName, genreList := range data {
 		genreName = strings.TrimSpace(genreName)
@@ -177,7 +180,7 @@ func GenreChannels(listName, srclist, ua string, listId int64, doRepeat bool) {
 			continue
 		}
 
-		categoryName := strings.ReplaceAll(fmt.Sprintf("%s(%s)", genreName, listName), " ", "")
+		categoryName := strings.ReplaceAll(fmt.Sprintf("%s(%s)", genreName, list.Name), " ", "")
 
 		var category models.IptvCategory
 		dao.DB.Model(&models.IptvCategory{}).Where("name = ?", categoryName).First(&category)
@@ -189,20 +192,24 @@ func GenreChannels(listName, srclist, ua string, listId int64, doRepeat bool) {
 				Name:   categoryName,
 				Sort:   maxSort + 1,
 				Type:   "add",
-				ListId: listId,
-				UA:     ua,
+				ListId: list.ID,
+				UA:     list.UA,
+			}
+
+			if list.Ku9 == 1 {
+				category.Ku9 = genreList.Ku9
 			}
 
 			if err := dao.DB.Create(&category).Error; err != nil {
 				continue
 			}
 			go until.SyncCaToEpg(category.ID)
-			until.AddChannelList(genreList, category.ID, listId, doRepeat)
+			until.AddChannelList(genreList.SrcList, category.ID, list.ID, doRepeat)
 		} else {
-			until.AddChannelList(genreList, category.ID, listId, doRepeat)
+			until.AddChannelList(genreList.SrcList, category.ID, list.ID, doRepeat)
 			proxyCaCheck := "proxyCaCheck_" + strconv.FormatInt(category.ID, 10)
 			dao.Cache.Delete(proxyCaCheck)
 		}
 	}
-	log.Println("更新" + listName + "分类结束")
+	log.Println("更新" + list.Name + "分类结束")
 }

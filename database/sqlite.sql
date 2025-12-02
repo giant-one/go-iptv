@@ -13,6 +13,7 @@ CREATE TABLE iptv_category (
     type TEXT NOT NULL DEFAULT 'user',
     proxy INTEGER NOT NULL DEFAULT 0,
     ua TEXT,
+    ku9 TEXT,
     sort INTEGER,
     rules TEXT,
     rename INTEGER DEFAULT 1,
@@ -30,6 +31,8 @@ CREATE TABLE iptv_category_list (
     url TEXT DEFAULT NULL,
     ua TEXT,
     rename INTEGER DEFAULT 1,
+    autogroup INTEGER DEFAULT 0,
+    ku9 INTEGER DEFAULT 0,
     autocategory INTEGER DEFAULT 0,
     latesttime TEXT DEFAULT NULL,
     repeat INTEGER DEFAULT 0

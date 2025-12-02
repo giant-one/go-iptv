@@ -77,7 +77,7 @@
 									<div class="modal-dialog" role="document">
 										<div class="modal-content">
 											<div class="modal-header">
-												<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#clId').val('');$('#listname').val('');$('#listurl').val('');$('#autocategory').prop('checked', false);$('#repeat').prop('checked', false);"><span aria-hidden="true">&times;</span></button>
+												<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#clId').val('');$('#listname').val('');$('#listurl').val('');$('#autocategory').prop('checked', false);$('#autogroup').prop('checked', false);$('#repeat').prop('checked', false);"><span aria-hidden="true">&times;</span></button>
 												<h4 class="modal-title">外部列表</h4>
 											</div>
 											<form method="post" action="/admin/channels">
@@ -97,24 +97,38 @@
 														<small class="help-block">APTV源的UA样例为: AptvPlayer/1.4.10</small>
 													</div>
 													<div class="form-group">
-   														<input type="checkbox" id="autocategory" name="autocategory" value="on"></input>
-   														<label for="autocategory" class="control-label">启用自动分组</label>
-														<small class="help-block">支持txt格式#genre#分组、支持m3u8格式group-title分组</small>
+														<label class="lyear-checkbox checkbox-inline">
+															<input type="checkbox" id="autocategory" name="autocategory" value="on" onclick="document.getElementById('autogroup').disabled = document.getElementById('lku9').disabled = !this.checked; document.getElementById('autogroup').checked = document.getElementById('lku9').checked = this.checked;"></input>
+															<span style="color: black; font-weight: bold;">启用自动分组</span>
+														</label>
+														<label class="lyear-checkbox checkbox-inline">
+															<input type="checkbox" id="autogroup" name="autogroup" value="on" disabled></input>
+															<span style="color: black; font-weight: bold;">二级分组</span>
+														</label>
+														<label class="lyear-checkbox checkbox-inline">
+															<input type="checkbox" id="lku9" name="ku9" value="on" disabled></input>
+															<span style="color: black; font-weight: bold;">TXT参数保留</span>
+														</label>
+														<small class="help-block">支持txt格式#genre#分组、支持m3u8格式group-title分组;  二级分组仅支持酷9的txt格式#group#分组，将分组名改为"分组名[一级分组](订阅源名称)"格式; TXT参数保留仅支持保留酷9等txt订阅分组附加参数</small>
 													</div>
 													<div class="form-group">
-   														<input type="checkbox" id="repeat" name="repeat" value="on"></input>
-   														<label for="repeat" class="control-label">启用去重</label>
+														<label class="lyear-checkbox checkbox-inline">
+															<input type="checkbox" id="repeat" name="repeat" value="on"></input>
+															<span style="color: black; font-weight: bold;">启用去重</span>
+														</label>
 														<small class="help-block">更新源数据时，判断频道链接是否和手动添加的列表是否重复</small>
 													</div>
 													<div class="form-group">
-   														<input type="checkbox" id="clrename" name="rename" value="on"></input>
-   														<label for="rename" class="control-label">启用频道重命名</label>
+														<label class="lyear-checkbox checkbox-inline">
+															<input type="checkbox" id="clrename" name="rename" value="on"></input>
+															<span style="color: black; font-weight: bold;">频道重命名</span>
+														</label>
 														<small class="help-block">当频道绑定epg时，订阅及app观看将如CCTV-1、CCTV1、CCTV综合等统一为CCTV1</small>
 													</div>
 												</div>
 												<div class="modal-footer">
 													<button type="button" onclick="submitFormPOST(this)" class="btn btn-primary" id="addthirdlist" name="addlist">确定</button>
-													<button type="button" class="btn btn-default" onclick="$('#cId').val('');$('#listname').val('');$('#listurl').val('');$('#autocategory').prop('checked', false);$('#repeat').prop('checked', false);" data-dismiss="modal">关闭</button>
+													<button type="button" class="btn btn-default" onclick="$('#clId').val('');$('#listname').val('');$('#listurl').val('');$('#autocategory').prop('checked', false);$('#autogroup').prop('checked', false);$('#repeat').prop('checked', false);" data-dismiss="modal">关闭</button>
 												</div>
 											</form>
 										</div>
@@ -156,7 +170,6 @@
 											<th style="text-align:center;">状态</th>
 											<th style="text-align:center;">中转访问</th>
 											<th style="text-align:center;">频道重命名</th>
-											<th style="text-align:center;">聚合规则</th>
 											<th style="text-align:center;">操作</th>
 										</tr>
 									</thead>
@@ -171,6 +184,7 @@
 											</td>
 											<td style="display:none;" class="ca-id" data-value="{{ .ID }}">{{ .ID }}</td>
 											<td style="display:none;" class="ca-ua" data-value="{{ .UA }}">{{ .UA }}</td>
+											<td style="display:none;" class="ca-ku9" data-value="{{ .Ku9 }}">{{ .Ku9 }}</td>
 											<td class="ca-name" data-value="{{ .Name }}">{{ .Name }}</td>
 											<td class="ca-type" data-value="{{ .Type }}">
 											{{ if eq .Type "add" }}
@@ -186,7 +200,6 @@
 											<td class="status-show">{{ if eq .Enable 1 }}<font color="#33a996">上线</font>{{else}}<font color="red">下线</font>{{end}}</td>
 											<td class="ca-proxy" data-value="{{ .Proxy }}">{{ if eq .Proxy 1 }}<font color="#33a996">启用</font>{{else}}<font color="red">关闭</font>{{end}}</td>
 											<td class="ca-rename" data-value="{{ .ReName }}">{{ if eq .ReName 1 }}<font color="#33a996">启用</font>{{else}}<font color="red">关闭</font>{{end}}</td>
-											<td class="ca-rules" data-value="{{ .Rules }}">{{ .RulesShow }}</td>
 											<td>
 												<button type="button" onclick="tdBtnPOST(this)" name="categoryStatus" value="{{.ID}}" class="btn btn-xs {{if eq .Enable 1 }}btn-warning">下线{{else}}btn-success">上线{{end}}</button>
 												<button class="btn btn-xs btn-info" type="button" value="{{.ID}}" data-toggle="modal" onclick="getCategory(this)" data-target="#addclass">编辑</button>
@@ -202,7 +215,7 @@
 									<div class="modal-dialog" role="document">
 										<div class="modal-content">
 											<div class="modal-header">
-												<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#caId').val('');$('#caname').val('');$('#rules').val('');$('#rename').prop('checked', true);$('#caproxy').prop('checked', false);$('#autoagg').prop('checked', false);document.getElementById('rules').disabled = true;"><span aria-hidden="true">&times;</span></button>
+												<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#caId').val('');$('#caname').val('');$('#rules').val('');$('#rename').prop('checked', true);$('#caproxy').prop('checked', false);"><span aria-hidden="true">&times;</span></button>
 												<h4 class="modal-title">分组编辑</h4>
 											</div>
 											<form method="post" action="/admin/channels">
@@ -233,19 +246,24 @@
 														<small class="help-block">当频道绑定epg时，订阅及app观看将如CCTV-1、CCTV1、CCTV综合等统一为CCTV1</small>
 													</div>
 													<div class="form-group">
+														<label>额外参数:</label>
+														<textarea class="form-control" rows="3" id="ku9" name="ku9" placeholder="参数内容"></textarea>
+														<small class="help-block">酷9 txt格式源分组额外参数 DE=解码#SC=画面比例#HEADERS=请求头#JS=Js路径#PB=回放参数#HOST=Host#PBO=回放偏移值#IJKAD=Ijk_Analyzeduration#TSO=时移结束时间增加值</small>
+													</div>
+													<!-- <div class="form-group">
 														<label for="rules" class="control-label">自动聚合规则: </label>
 														<input class="form-control" id="rules" name="rules" placeholder="正则表达式" disabled></input>
 														<small class="help-block">自动聚合规则为正则表达式</small>
-													</div>
-													<div class="form-group">
+													</div> -->
+													<!-- <div class="form-group">
    														<input type="checkbox" id="autoagg" name="autoagg" value="on" onclick="document.getElementById('rules').disabled = !this.checked"></input>
    														<label for="autoagg" class="control-label">启用自动聚合</label>
 														<small class="help-block">提取所有符合自动聚合规则的频道到该分组，频道所在的原分组不受影响。注意：当前分组如果已有频道，将会全部清空！</small>
-													</div>
+													</div> -->
 												</div>
 												<div class="modal-footer">
 													<button type="button" onclick="submitFormPOST(this)" class="btn btn-primary" name="saveCa">确定</button>
-													<button type="button" class="btn btn-default" onclick="$('#caId').val('');$('#caname').val('');$('#rules').val('');$('#rename').prop('checked', true);$('#caproxy').prop('checked', false);$('#autoagg').prop('checked', false);document.getElementById('rules').disabled = true;" data-dismiss="modal">关闭</button>
+													<button type="button" class="btn btn-default" onclick="$('#caId').val('');$('#caname').val('');$('#rules').val('');$('#ku9').val('');$('#rename').prop('checked', true);$('#caproxy').prop('checked', false);" data-dismiss="modal">关闭</button>
 												</div>
 											</form>
 										</div>
@@ -334,7 +352,7 @@
 										
 										<div class="modal-header" style="flex-shrink:0;">
 											<button type="button" class="close" data-dismiss="modal" aria-label="Close"
-											onclick="$('#caId').val('');$('#caname').val('');$('#rules').val('');$('#autoagg').prop('checked', false);document.getElementById('rules').disabled = true;">
+											onclick="$('#editcaId').val('');$('#chname').val('');$('#chId').val('');$('#chURL').val('');">
 											<span aria-hidden="true">&times;</span>
 											</button>
 											<h4 class="modal-title">EPG编辑</h4>
@@ -383,11 +401,10 @@
 											<div class="modal-footer" style="flex-shrink:0; margin-top:auto;">
 											<button type="button" onclick="saveChannelsOne(this)" class="btn btn-primary" name="saveCa">确定</button>
 											<button type="button" class="btn btn-default"
-												onclick="$('#caId').val('');$('#caname').val('');$('#rules').val('');$('#autoagg').prop('checked', false);document.getElementById('rules').disabled = true;"
+												onclick="$('#editcaId').val('');$('#chname').val('');$('#chId').val('');$('#chURL').val('');"
 												data-dismiss="modal">关闭</button>
 											</div>
 										</form>
-
 										</div>
 									</div>
 								</div>
