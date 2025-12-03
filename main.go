@@ -14,14 +14,18 @@ import (
 
 func main() {
 	time.Local, _ = time.LoadLocation("Asia/Shanghai") // 设置时区
-	if !until.IsPrivileged() {
-		log.Println("请使用privileged(特权模式、高权限执行容器)运行")
-		return
+	if !until.Exists("/tmp/check_privileged") {
+		if !until.IsPrivileged() {
+			log.Println("请使用privileged(特权模式、高权限执行容器)运行")
+			return
+		}
 	}
 
-	if until.CheckRam() {
-		log.Println("可用内存不足256MB，无法运行")
-		return
+	if !until.Exists("/tmp/check_start_ram") {
+		if until.CheckRam() {
+			log.Println("可用内存不足256MB，无法运行")
+			return
+		}
 	}
 
 	build := true
@@ -70,7 +74,7 @@ func main() {
 
 	if !until.Exists("/config/iptv.db") || !until.Exists("/config/config.yml") || !until.Exists("/config/install.lock") {
 		bootstrap.Installed = false
-		log.Println("检测到未安装，开始安装...")
+		log.Println("检测到未安装，请浏览器访问镜像映射的80端口执行安装流程...")
 		log.Println("启动接口...")
 		router := router.InitRouter(debug)
 		router.Run(":" + *port)
