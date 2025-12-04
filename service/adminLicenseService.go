@@ -79,7 +79,7 @@ func Proxy(params url.Values) dto.ReturnJsonDto {
 					go until.CleanAutoCacheAll() // 清理缓存
 					return dto.ReturnJsonDto{Code: 1, Msg: "启动成功，可以到频道分组管理中开启中转啦", Type: "success"}
 				} else {
-					return startError(cfg, errors.New(scheme+"://"+pAddr+":"+port+"无法访问,请重新配置地址或端口"))
+					return startError(cfg, errors.New("中转地址 "+scheme+"://"+pAddr+":"+port+" 无法访问,请重新配置地址或端口"))
 				}
 			} else {
 				go until.CleanAutoCacheAll()
