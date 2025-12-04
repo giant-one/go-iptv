@@ -11,6 +11,7 @@ function replaceContent(html) {
 	var $newTitle = $temp.find('.navbar-page-title');
     if ($newTitle.length) $('.navbar-page-title').replaceWith($newTitle);
 	updateYear();
+	$('[data-toggle="popover"]').popover();
 
 	// 执行 script 内容
 	scripts.each(function() {
