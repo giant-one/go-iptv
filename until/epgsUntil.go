@@ -118,6 +118,7 @@ func UpdataEpgList() bool {
 	var epgLists []models.IptvEpgList
 	dao.DB.Model(&models.IptvEpgList{}).Find(&epgLists)
 	for _, list := range epgLists {
+		log.Println("更新EPG源: ", list.Name)
 		cacheKey := "epgXmlFrom_" + list.Name
 		dao.Cache.Delete(cacheKey)
 		xmlStr := GetUrlData(strings.TrimSpace(list.Url), list.UA)
@@ -164,6 +165,7 @@ func UpdataEpgList() bool {
 				dao.DB.Model(&models.IptvEpgList{}).Where("id = ?", list.ID).Updates(&models.IptvEpgList{Status: 1, LastTime: time.Now().Unix()})
 				// dao.DB.Model(&models.IptvEpg{}).Where("name like ?", list.Remarks+"-%").Delete(&models.IptvEpg{})
 				// dao.DB.Model(&models.IptvEpg{}).Create(&epgs)
+				log.Println("开始同步EPG")
 				reload, _ := SyncEpgs(list.ID, epgs, false) // 同步
 				if reload {
 					go BindChannel() // 绑定频道
@@ -172,10 +174,12 @@ func UpdataEpgList() bool {
 			}
 		}
 	}
+	log.Println("更新完成")
 	return true
 }
 
 func UpdataEpgListOne(list models.IptvEpgList, newAdd bool) (bool, error) {
+	log.Println("更新EPG源: ", list.Name)
 	cacheKey := "epgXmlFrom_" + list.Name
 	dao.Cache.Delete(cacheKey)
 	xmlStr := GetUrlData(strings.TrimSpace(list.Url), list.UA)
@@ -227,11 +231,13 @@ func UpdataEpgListOne(list models.IptvEpgList, newAdd bool) (bool, error) {
 			// dao.DB.Model(&models.IptvEpg{}).Where("name like ?", list.Remarks+"-%").Delete(&models.IptvEpg{})
 			// dao.DB.Model(&models.IptvEpg{}).Create(&epgs)
 
+			log.Println("开始同步EPG")
 			reload, _ := SyncEpgs(list.ID, epgs, newAdd) // 同步
 			if reload {
 				go BindChannel() // 绑定频道
 			}
 
+			log.Println("更新完成")
 			return true, nil
 		}
 		return false, errors.New("未找到epg数据")

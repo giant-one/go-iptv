@@ -413,9 +413,9 @@ function epgsGetChannel(btn) {
 				var html = "";
 				res.data.forEach(function(item) {
 					html += '<label class="lyear-checkbox checkbox-inline">';
-					html += '<div style=" float: left;background: ' + (item.checked ? '#7fff00;' : '#E7E7E7;') +' margin-right: 3px; margin-bottom: 3px; padding: 2px 5px;">';
+					html += '<div style=" float: left;background: ' + (item.select ? '#7fff00;' : '#E7E7E7;') +' margin-right: 3px; margin-bottom: 3px; padding: 2px 5px;">';
 					html += '<input type="checkbox" name="names[]" value="' + item.name + '"' 
-							+ (item.checked ? ' checked="checked"' : '') + '>';
+							+ (item.select ? ' checked="checked"' : '') + '>';
 					html += '<span>' + item.name + '</span></div>';
 					html += '</label>';
 				});
