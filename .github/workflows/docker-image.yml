@@ -116,43 +116,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # ---同步 Release 到 Gitee---
-      - name: Upload Release to Gitee
-        env:
-          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
-          GITEE_USER: ${{ secrets.GITEE_USERNAME }}
-          REPO_NAME: ${{ github.event.repository.name }}
-          TAG_NAME: ${{ env.IMAGE_VERSION }}
-        run: |
-          # 判断是否 beta 版本
-          if [[ "$TAG_NAME" == *"beta"* ]]; then
-            PRERELEASE=true
-          else
-            PRERELEASE=false
-          fi
-
-          # 创建 Gitee Release
-          curl -s -X POST "https://gitee.com/api/v5/repos/$GITEE_USER/$REPO_NAME/releases" \
-            -H "Content-Type: application/json" \
-            -H "Authorization: token $GITEE_TOKEN" \
-            -d "{
-              \"tag_name\": \"$TAG_NAME\",
-              \"name\": \"Release $TAG_NAME\",
-              \"description\": \"GitHub Release synced\",
-              \"draft\": false,
-              \"prerelease\": $PRERELEASE,
-              \"target_commitish\": \"main\"
-            }"
-
-          # 获取 Release ID
-          RELEASE_ID=$(curl -s "https://gitee.com/api/v5/repos/$GITEE_USER/$REPO_NAME/releases" \
-            -H "Authorization: token $GITEE_TOKEN" | jq ".[] | select(.tag_name==\"$TAG_NAME\") | .id")
-
-          # 上传资产文件
-          for f in iptv_dist/*; do
-            filename=$(basename "$f")
-            echo "Uploading $filename ..."
-            curl -X POST "https://gitee.com/api/v5/repos/$GITEE_USER/$REPO_NAME/releases/$RELEASE_ID/assets" \
-              -F "access_token=$GITEE_TOKEN" \
-              -F "name=$filename" \
-              -F "file=@$f"
-          done
+      - name: Create Release Only
+        uses: nicennnnnnnlee/action-gitee-release@master
+        with:
+          gitee_action: create_release
+          gitee_owner: ${{ secrets.GITEE_USERNAME }}
+          gitee_repo: ${{ vars.GITEE_REPO }}
+          gitee_token: ${{ secrets.GITEE_TOKEN }}
+          gitee_tag_name: ${{ env.IMAGE_VERSION }}
+          gitee_release_name: Release ${{ env.IMAGE_VERSION }}
+          gitee_release_body: ${{ env.IMAGE_VERSION }}
+          gitee_target_commitish: master
