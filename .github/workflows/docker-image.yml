@@ -114,16 +114,14 @@ jobs:
           files: iptv_dist/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  repo-sync:
-    runs-on: ubuntu-latest
-    steps:
+
       - name: Mirror to Gitee via SSH
         uses: Yikun/hub-mirror-action@master
         with:
           src: github/${{ github.repository_owner }}
           dst: gitee/${{ secrets.GITEE_USERNAME }}
           dst_key: ${{ secrets.GITEE_SSH_KEY }}
-          static_list: "${{ github.event.repository.name }}"
+          dst_token: ${{ secrets.GITEE_TOKEN }}
+          white_list: "${{ github.event.repository.name }}"
           force_update: true
           account_type: user
-          lfs: false
