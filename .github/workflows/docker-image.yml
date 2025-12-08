@@ -117,6 +117,7 @@ jobs:
 
       # ---同步 Release 到 Gitee---
       - name: Create Release Only
+        if: ${{ !contains(env.IMAGE_VERSION, 'beta') }}
         uses: nicennnnnnnlee/action-gitee-release@master
         with:
           gitee_action: create_release
@@ -124,8 +125,9 @@ jobs:
           gitee_repo: ${{ vars.GITEE_REPO }}
           gitee_token: ${{ secrets.GITEE_TOKEN }}
           gitee_tag_name: ${{ env.IMAGE_VERSION }}
-          gitee_release_name: Release ${{ env.IMAGE_VERSION }}${{ contains(env.IMAGE_VERSION, 'beta') && ' (beta)' || '' }}
+          gitee_release_name: Release ${{ env.IMAGE_VERSION }}
           gitee_release_body: ${{ env.IMAGE_VERSION }}
           gitee_target_commitish: master
+          gitee_upload_retry_times: 3
           gitee_files: |
             iptv_dist/*

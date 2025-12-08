@@ -23,6 +23,7 @@ type githubRelease struct {
 	TagName     string    `json:"tag_name"`
 	Prerelease  bool      `json:"prerelease"`
 	PublishedAt time.Time `json:"published_at"`
+	CreatedAt   time.Time `json:"created_at"`
 	Assets      []struct {
 		Name               string `json:"name"`
 		BrowserDownloadURL string `json:"browser_download_url"`
@@ -86,6 +87,39 @@ func fetchLatestStableRelease(owner, repo string) (*githubRelease, error) {
 	return latest, nil
 }
 
+func fetchLatestStableReleaseGitee(owner, repo string) (*githubRelease, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	url := fmt.Sprintf("https://gitee.com/api/v5/repos/%s/%s/releases", owner, repo)
+	req, _ := http.NewRequestWithContext(ctx, "GET", url, nil)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var releases []githubRelease
+	if err := json.NewDecoder(resp.Body).Decode(&releases); err != nil {
+		return nil, err
+	}
+
+	var latest *githubRelease
+	for _, r := range releases {
+		if r.Prerelease {
+			continue
+		}
+		if latest == nil || r.CreatedAt.After(latest.CreatedAt) {
+			latest = &r
+		}
+	}
+
+	if latest == nil {
+		return nil, errors.New("无正式版")
+	}
+	return latest, nil
+}
+
 // ------------------------------------------------------------
 // CheckNewVer
 // ------------------------------------------------------------
@@ -124,10 +158,16 @@ func isNewer(newVer, oldVer string, vLen int) (bool, error) {
 }
 
 func CheckNewVerWeb(local string) (bool, string, error) {
+	var latest *githubRelease
 	latest, err := fetchLatestStableRelease("wz1st", "go-iptv")
 	if err != nil {
-		log.Println("Github 管理端检查失败: ", err.Error())
-		return false, "", err
+		log.Println("Github 检查失败，切换Gitee...")
+		tmp, err1 := fetchLatestStableReleaseGitee("wz1st", "go-iptv")
+		if err1 != nil {
+			log.Println("Gitee 检查失败，请检查网络连接")
+			return false, "", err1
+		}
+		latest = tmp
 	}
 
 	isNew, err := isNewer(latest.TagName, local, 4)
@@ -135,10 +175,16 @@ func CheckNewVerWeb(local string) (bool, string, error) {
 }
 
 func CheckNewVerLic(local string) (bool, string, error) {
+	var latest *githubRelease
 	latest, err := fetchLatestStableRelease("wz1st", "iptv-license-down")
 	if err != nil {
-		log.Println("Github 引擎版本检查失败: ", err.Error())
-		return false, "", err
+		log.Println("Github 检查失败，切换Gitee...")
+		tmp, err1 := fetchLatestStableReleaseGitee("wz1st", "iptv-license-down")
+		if err1 != nil {
+			log.Println("Gitee 检查失败，请检查网络连接")
+			return false, "", err1
+		}
+		latest = tmp
 	}
 
 	isNew, err := isNewer(latest.TagName, local, 3)
@@ -276,9 +322,16 @@ func copyFile(src, dst string) error {
 
 func DownloadAndVerifyWeb(arch string) (bool, string, error) {
 
+	var rel *githubRelease
 	rel, err := fetchLatestStableRelease("wz1st", "go-iptv")
 	if err != nil {
-		return false, "", err
+		log.Println("Github 获取失败，切换Gitee...")
+		tmp, err1 := fetchLatestStableReleaseGitee("wz1st", "go-iptv")
+		if err1 != nil {
+			log.Println("Gitee 获取失败，请检查网络连接")
+			return false, "", err1
+		}
+		rel = tmp
 	}
 
 	downDir := "/tmp/down"
@@ -364,9 +417,16 @@ func DownloadAndVerifyWeb(arch string) (bool, string, error) {
 
 func DownloadAndVerifyLic(arch string) (bool, string, error) {
 
+	var rel *githubRelease
 	rel, err := fetchLatestStableRelease("wz1st", "iptv-license-down")
 	if err != nil {
-		return false, "", err
+		log.Println("Github 获取失败，切换Gitee...")
+		tmp, err1 := fetchLatestStableReleaseGitee("wz1st", "iptv-license-down")
+		if err1 != nil {
+			log.Println("Gitee 获取失败，请检查网络连接")
+			return false, "", err1
+		}
+		rel = tmp
 	}
 
 	downDir := "/tmp/down"
