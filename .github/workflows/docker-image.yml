@@ -124,6 +124,8 @@ jobs:
           gitee_repo: ${{ vars.GITEE_REPO }}
           gitee_token: ${{ secrets.GITEE_TOKEN }}
           gitee_tag_name: ${{ env.IMAGE_VERSION }}
-          gitee_release_name: Release ${{ env.IMAGE_VERSION }}
+          gitee_release_name: Release ${{ env.IMAGE_VERSION }}${{ contains(env.IMAGE_VERSION, 'beta') && ' (beta)' || '' }}
           gitee_release_body: ${{ env.IMAGE_VERSION }}
           gitee_target_commitish: master
+          gitee_files: |
+            iptv_dist/*
