@@ -59,12 +59,12 @@ func RestartLic() bool {
 		return false
 	}
 
-	ws, err := dao.ConLicense("ws://127.0.0.1:81/ws")
+	err := dao.WS.Start("ws://127.0.0.1:81/ws")
 	if err != nil {
 		log.Println("引擎连接失败：", err)
 		return false
 	}
-	dao.WS = ws
+
 	res, err := dao.WS.SendWS(dao.Request{Action: "getlic"})
 	if err == nil {
 		if err := json.Unmarshal(res.Data, &dao.Lic); err == nil {

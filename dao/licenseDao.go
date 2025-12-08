@@ -2,6 +2,7 @@ package dao
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"go-iptv/dto"
 	"io"
@@ -15,149 +16,265 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var WS = &WSClient{}
+var WS = NewWSClient()
 var Lic dto.Lic
 
-// -------------------- 数据结构 --------------------
+// =========================
+// 数据结构
+// =========================
 
-// 固定请求结构体
 type Request struct {
 	Action string      `json:"a"`
 	Data   interface{} `json:"d"`
 }
 
-// 固定响应结构体
 type Response struct {
 	Code int             `json:"code"`
 	Msg  string          `json:"msg"`
 	Data json.RawMessage `json:"data"`
 }
 
-// -------------------- WebSocket 客户端 --------------------
+// =========================
+// WSClient（稳定版 + 心跳阈值）
+// =========================
 
 type WSClient struct {
 	url    string
 	conn   *websocket.Conn
-	lock   sync.Mutex
-	done   chan struct{}
+	rw     sync.RWMutex
 	closed bool
-	retry  int
-	count  int
+
+	reconnectCh  chan struct{}
+	maxRetry     int
+	stopCh       chan struct{}
+	reconnecting bool // 重连状态标记，防止重复触发
+
+	failCount   int           // 心跳连续失败计数
+	failLimit   int           // 心跳失败阈值
+	backoffBase time.Duration // 指数退避基础
 }
 
-// -------------------- 连接管理 --------------------
+// ------------------ 创建客户端 ------------------
 
-// 创建连接（带自动重连）
-func ConLicense(url string) (*WSClient, error) {
-	if !IsRunning() {
-		return nil, fmt.Errorf("引擎未启动")
+func NewWSClient() *WSClient {
+	c := &WSClient{
+		maxRetry:    3,
+		reconnectCh: make(chan struct{}, 1),
+		stopCh:      make(chan struct{}),
+		failLimit:   3,
+		backoffBase: 1 * time.Second,
 	}
-	client := &WSClient{
-		url:   url,
-		done:  make(chan struct{}),
-		retry: 5, // 最大重试次数
-	}
-
-	if err := client.connect(); err != nil {
-		return nil, err
-	}
-
-	// 启动引擎在线检测检测
-	go client.heartbeat()
-
-	return client, nil
+	go c.reconnectWorker() // 启动唯一重连协程
+	return c
 }
 
-func (c *WSClient) connect() error {
+// ------------------ 启动连接 ------------------
+
+func (c *WSClient) Start(url string) error {
+	c.url = url
 	if !IsRunning() {
 		return fmt.Errorf("引擎未启动")
 	}
+	return c.doConnect()
+}
+
+// ------------------ 真正执行连接 ------------------
+
+func (c *WSClient) doConnect() error {
+	dialer := websocket.Dialer{
+		HandshakeTimeout:  5 * time.Second,
+		EnableCompression: true,
+	}
+
+	var conn *websocket.Conn
 	var err error
-	for i := 1; i <= c.retry; i++ {
-		dialer := websocket.Dialer{
-			HandshakeTimeout:  5 * time.Second,
-			EnableCompression: true,
-		}
-		c.conn, _, err = dialer.Dial(c.url, nil)
+
+	for i := 1; i <= c.maxRetry; i++ {
+		conn, _, err = dialer.Dial(c.url, nil)
 		if err == nil {
-			c.count = 0
+			c.rw.Lock()
+			c.conn = conn
+			c.closed = false
+			c.failCount = 0
+			c.rw.Unlock()
+
 			log.Println("✅ 引擎连接成功")
+			go c.heartbeat()
 			return nil
 		}
-		time.Sleep(5 * time.Second)
+		time.Sleep(time.Duration(i*2) * time.Second)
 	}
-	c.count++
-	log.Printf("❌ 第 %d 次连接失败: %v, 3 秒后重试...", c.count, err)
-	if c.count > 3 {
-		c.count = 0
-		return fmt.Errorf("❌ 多次连接失败，请检查引擎状态: %w", err)
-	}
-	c.connect()
-	return fmt.Errorf("连接失败: %w", err)
+	return fmt.Errorf("引擎连接失败: %w", err)
 }
 
-// 判断 WS 是否已连接
-func (c *WSClient) IsOnline() bool {
-	c.lock.Lock()
-	defer c.lock.Unlock()
-	return c.conn != nil && !c.closed
-}
-
-// -------------------- 重启并重新连接 --------------------
-
-// RestartLicense 会尝试重启 License 服务并重新建立 WS 连接
-
-// -------------------- 引擎在线检测机制 --------------------
+// ================== 心跳 ==================
 
 func (c *WSClient) heartbeat() {
-	if !IsRunning() {
-		return
-	}
-	log.Println("启动引擎在线检测检测...")
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(3 * time.Second)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ticker.C:
-			c.lock.Lock()
-			if c.closed || c.conn == nil {
-				c.lock.Unlock()
+			c.rw.RLock()
+			conn := c.conn
+			closed := c.closed
+			c.rw.RUnlock()
+
+			if closed || conn == nil {
 				return
 			}
-			err := c.conn.WriteMessage(websocket.PingMessage, []byte("ping"))
-			c.lock.Unlock()
 
+			err := conn.WriteMessage(websocket.PingMessage, nil)
 			if err != nil {
-				log.Println("⚠️ 引擎在线检测失败，尝试重连...")
-				c.reconnect()
+				c.rw.Lock()
+				c.failCount++
+				log.Printf("⚠️ 心跳失败 #%d", c.failCount)
+				if c.failCount >= c.failLimit && !c.reconnecting {
+					c.rw.Unlock()
+					log.Println("⚠️ 心跳连续失败，触发重连")
+					c.triggerReconnect()
+				} else {
+					c.rw.Unlock()
+				}
+			} else {
+				// 成功心跳，重置计数
+				c.rw.Lock()
+				c.failCount = 0
+				c.rw.Unlock()
 			}
-		case <-c.done:
+		case <-c.stopCh:
 			return
 		}
 	}
 }
 
-// -------------------- 重连逻辑 --------------------
+// ================== 重连控制 ==================
 
-func (c *WSClient) reconnect() {
-	c.lock.Lock()
-	defer c.lock.Unlock()
-
-	if c.closed {
-		return
+func (c *WSClient) triggerReconnect() {
+	c.rw.Lock()
+	defer c.rw.Unlock()
+	if c.reconnecting || c.closed {
+		return // 已经在重连中或已关闭
 	}
-	if c.conn != nil {
-		c.conn.Close()
-	}
-
-	log.Println("🔄 尝试重连中...")
-	if err := c.connect(); err != nil {
-		log.Println("❌ 重连失败:", err)
-	} else {
-		log.Println("✅ 重连成功")
+	c.reconnecting = true
+	select {
+	case c.reconnectCh <- struct{}{}:
+	default:
 	}
 }
+
+func (c *WSClient) reconnectWorker() {
+	for range c.reconnectCh {
+		log.Println("🔄 执行引擎重连...")
+		c.CloseConn(false)
+
+		backoff := c.backoffBase
+		success := false
+		for i := 0; i < c.maxRetry; i++ {
+			if err := c.doConnect(); err != nil {
+				log.Printf("❌ 引擎重连第 %d 次失败: %v", i+1, err)
+				time.Sleep(backoff)
+				backoff *= 2
+			} else {
+				success = true
+				break
+			}
+		}
+
+		if !success {
+			log.Println("❌ 重连失败，关闭连接")
+			c.CloseConn(true) // 彻底关闭
+		}
+
+		c.rw.Lock()
+		c.reconnecting = false
+		c.failCount = 0
+		c.rw.Unlock()
+	}
+}
+
+// ================== 安全关闭 ==================
+
+func (c *WSClient) CloseConn(fullClose bool) {
+	c.rw.Lock()
+	defer c.rw.Unlock()
+	if c.conn != nil {
+		_ = c.conn.Close()
+		c.conn = nil
+	}
+	if fullClose {
+		c.closed = true
+		select {
+		case <-c.stopCh:
+		default:
+			close(c.stopCh)
+		}
+	}
+}
+
+// ================== 连接状态 ==================
+
+func (c *WSClient) IsOnline() bool {
+	c.rw.RLock()
+	defer c.rw.RUnlock()
+	return c.conn != nil && !c.closed
+}
+
+// ================== 发送请求 ==================
+
+func (c *WSClient) SendWS(req Request) (Response, error) {
+	return c.sendWSWithRetry(req, 2)
+}
+
+func (c *WSClient) sendWSWithRetry(req Request, retry int) (Response, error) {
+	if !IsRunning() {
+		return Response{}, fmt.Errorf("引擎未启动")
+	}
+
+	if !c.IsOnline() {
+		if err := c.doConnect(); err != nil {
+			return Response{}, fmt.Errorf("引擎未在线")
+		}
+	}
+
+	c.rw.RLock()
+	conn := c.conn
+	c.rw.RUnlock()
+	if conn == nil {
+		return Response{}, errors.New("连接不存在")
+	}
+
+	if err := conn.WriteJSON(req); err != nil {
+		log.Println("⚠️ 发送失败，触发重连")
+		c.triggerReconnect()
+		if retry > 0 {
+			time.Sleep(2 * time.Second)
+			return c.sendWSWithRetry(req, retry-1)
+		}
+		return Response{}, fmt.Errorf("发送失败: %w", err)
+	}
+
+	_, msg, err := conn.ReadMessage()
+	if err != nil {
+		log.Println("⚠️ 读取响应失败，触发重连")
+		c.triggerReconnect()
+		if retry > 0 {
+			time.Sleep(2 * time.Second)
+			return c.sendWSWithRetry(req, retry-1)
+		}
+		return Response{}, fmt.Errorf("读取响应失败: %w", err)
+	}
+
+	var resp Response
+	if err := json.Unmarshal(msg, &resp); err != nil {
+		return Response{}, fmt.Errorf("解析响应失败: %w", err)
+	}
+	return resp, nil
+}
+
+// ================== 引擎状态检测 ==================
+
 func IsRunning() bool {
 	cmd := exec.Command("bash", "-c", "ps -ef | grep '/license' | grep -v grep")
 	output, err := cmd.CombinedOutput()
@@ -168,117 +285,16 @@ func IsRunning() bool {
 }
 
 func checkRun() bool {
-	defaultUA := "Go-http-client/1.1"
-	useUA := defaultUA
-
 	req, err := http.NewRequest("GET", "http://127.0.0.1:81/", nil)
 	if err != nil {
 		return false
 	}
-
-	req.Header.Set("User-Agent", useUA)
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	req.Header.Set("User-Agent", "Go-http-client/1.1")
+	resp, err := (&http.Client{}).Do(req)
 	if err != nil {
 		return false
 	}
 	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return false
-	}
-
+	body, _ := io.ReadAll(resp.Body)
 	return strings.Contains(string(body), "ok")
 }
-
-// -------------------- 消息交互 --------------------
-
-// 发送 JSON 并接收响应
-func (c *WSClient) SendWS(req Request) (Response, error) {
-	if !IsRunning() {
-		return Response{}, fmt.Errorf("引擎未启动")
-	}
-	if !c.IsOnline() {
-		return Response{}, fmt.Errorf("引擎连接失败")
-	}
-	c.lock.Lock()
-	defer c.lock.Unlock()
-
-	if c.closed {
-		return Response{}, fmt.Errorf("连接已关闭")
-	}
-
-	// 发送
-	if err := c.conn.WriteJSON(req); err != nil {
-		log.Println("⚠️ 写入失败:", err)
-		go c.reconnect()
-		return Response{}, err
-	}
-
-	// 接收
-	_, msg, err := c.conn.ReadMessage()
-	if err != nil {
-		log.Println("⚠️ 读取失败:", err)
-		go c.reconnect()
-		return Response{}, err
-	}
-
-	// 解析
-
-	var resp Response
-	if err := json.Unmarshal(msg, &resp); err != nil {
-		return Response{}, fmt.Errorf("解析 JSON 失败: %w", err)
-	}
-
-	return resp, nil
-}
-
-// -------------------- 关闭连接 --------------------
-
-func (c *WSClient) Close() {
-	c.lock.Lock()
-	defer c.lock.Unlock()
-
-	if c.closed {
-		return
-	}
-
-	c.closed = true
-	close(c.done)
-
-	if c.conn != nil {
-		c.conn.Close()
-		log.Println("🔒 引擎断开")
-	}
-}
-
-// -------------------- 使用示例 --------------------
-
-// func main() {
-// 	url := "ws://127.0.0.1:8080/ws"
-
-// 	client, err := ConnectWebSocket(url)
-// 	if err != nil {
-// 		log.Fatal("连接失败:", err)
-// 	}
-// 	defer client.Close()
-
-// 	for {
-// 		req := Request{
-// 			Action: "echo",
-// 			// Data:   map[string]any{"msg": "hello"},
-// 		}
-
-// 		resp, err := client.SendWS(req)
-// 		if err != nil {
-// 			log.Println("发送失败:", err)
-// 			time.Sleep(2 * time.Second)
-// 			continue
-// 		}
-
-// 		log.Println("响应: %+v\n", resp)
-// 		time.Sleep(10 * time.Second)
-// 	}
-// }

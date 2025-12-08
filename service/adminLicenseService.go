@@ -204,7 +204,7 @@ func Register(params url.Values) dto.ReturnJsonDto {
 		Pwd2: pwd2,
 	}})
 	if err != nil {
-		return dto.ReturnJsonDto{Code: 0, Msg: "连接服务器失败", Type: "danger"}
+		return dto.ReturnJsonDto{Code: 0, Msg: "连接服务器失败:" + err.Error(), Type: "danger"}
 	} else if res.Code != 1 {
 		return dto.ReturnJsonDto{Code: 0, Msg: res.Msg, Type: "danger"}
 	}
@@ -225,13 +225,13 @@ func Login(params url.Values) dto.ReturnJsonDto {
 		Pwd:  pwd,
 	}})
 	if err != nil {
-		return dto.ReturnJsonDto{Code: 0, Msg: "连接服务器失败", Type: "danger"}
+		return dto.ReturnJsonDto{Code: 0, Msg: "连接服务器失败:" + err.Error(), Type: "danger"}
 	} else if res.Code != 1 {
 		return dto.ReturnJsonDto{Code: 0, Msg: res.Msg, Type: "danger"}
 	} else {
 		if err := json.Unmarshal(res.Data, &dao.Lic); err != nil {
 			log.Println("⚠️ 无法解析服务器返回的key:", err)
-			return dto.ReturnJsonDto{Code: 0, Msg: "连接服务器失败", Type: "danger"}
+			return dto.ReturnJsonDto{Code: 0, Msg: "连接服务器失败:" + err.Error(), Type: "danger"}
 		}
 	}
 
