@@ -121,7 +121,7 @@ jobs:
         uses: Yikun/hub-mirror-action@master
         with:
           src: github/${{ github.repository }}
-          dst: gitee/${{ secrets.GITEE_REPO }}
+          dst: gitee/${{ secrets.GITEE_USERNAME }}/${{ secrets.GITEE_REPO }}
           src-token: ${{ secrets.GITHUB_TOKEN }}
           dst-token: ${{ secrets.GITEE_TOKEN }}
           account-type: user
