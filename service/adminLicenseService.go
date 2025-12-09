@@ -107,7 +107,7 @@ func startError(cfg *dto.Config, err error) dto.ReturnJsonDto {
 }
 
 func ResEng() dto.ReturnJsonDto {
-	if until.RestartLic() {
+	if dao.WS.RestartLic() {
 		return dto.ReturnJsonDto{Code: 1, Msg: "重启成功", Type: "success"}
 	}
 	return dto.ReturnJsonDto{Code: 0, Msg: "重启失败", Type: "danger"}

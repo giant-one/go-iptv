@@ -96,6 +96,11 @@ func (c *WSClient) doConnect() error {
 			c.conn = conn
 			c.closed = false
 			c.failCount = 0
+
+			if c.stopCh == nil {
+				c.stopCh = make(chan struct{})
+			}
+
 			c.rw.Unlock()
 
 			log.Println("✅ 引擎连接成功")
@@ -110,6 +115,7 @@ func (c *WSClient) doConnect() error {
 // ================== 心跳 ==================
 
 func (c *WSClient) heartbeat() {
+	log.Println("✅ 启动引擎连接心跳检测")
 	ticker := time.NewTicker(3 * time.Second)
 	defer ticker.Stop()
 
@@ -173,6 +179,11 @@ func (c *WSClient) reconnectWorker() {
 		success := false
 		for i := 0; i < c.maxRetry; i++ {
 			if err := c.doConnect(); err != nil {
+				if !IsRunning() {
+					if !c.RestartLic() {
+						err = errors.New("引擎停止运行")
+					}
+				}
 				log.Printf("❌ 引擎重连第 %d 次失败: %v", i+1, err)
 				time.Sleep(backoff)
 				backoff *= 2
@@ -210,15 +221,17 @@ func (c *WSClient) CloseConn(fullClose bool) {
 		default:
 			close(c.stopCh)
 		}
+		c.stopCh = nil
 	}
 }
 
 // ================== 连接状态 ==================
 
 func (c *WSClient) IsOnline() bool {
+
 	c.rw.RLock()
 	defer c.rw.RUnlock()
-	return c.conn != nil && !c.closed
+	return c.conn != nil && !c.closed && IsRunning()
 }
 
 // ================== 发送请求 ==================
@@ -297,4 +310,70 @@ func checkRun() bool {
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
 	return strings.Contains(string(body), "ok")
+}
+
+func (c *WSClient) RestartLic() bool {
+	log.Println("♻️ 正在重启引擎...")
+
+	r := GetUrlData("http://127.0.0.1:82/licRestart")
+	if strings.TrimSpace(r) == "" {
+		log.Println("重启失败: 升级服务未启动")
+		return false
+	}
+	if strings.TrimSpace(r) != "OK" {
+		log.Println("重启失败: 升级服务返回错误")
+		return false
+	}
+
+	err := c.Start("ws://127.0.0.1:81/ws")
+	if err != nil {
+		log.Println("引擎连接失败：", err)
+		return false
+	}
+
+	res, err := c.SendWS(Request{Action: "getlic"})
+	if err == nil {
+		if err := json.Unmarshal(res.Data, &Lic); err == nil {
+			log.Println("引擎初始化成功")
+			log.Println("机器码:", Lic.ID)
+		} else {
+			log.Println("授权信息解析错误:", err)
+		}
+	} else {
+		log.Println("引擎初始化错误")
+		return false
+	}
+
+	log.Println("✅  引擎已成功重启并重新连接")
+	return true
+}
+
+func GetUrlData(url string, ua ...string) string {
+	defaultUA := "Go-http-client/1.1"
+	useUA := defaultUA
+
+	if len(ua) > 0 && ua[0] != "" {
+		useUA = ua[0]
+	}
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return ""
+	}
+
+	req.Header.Set("User-Agent", useUA)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return ""
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return ""
+	}
+
+	return string(body)
 }

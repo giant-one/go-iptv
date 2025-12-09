@@ -47,41 +47,6 @@ func checkRun() bool {
 	return strings.Contains(string(body), "ok")
 }
 
-func RestartLic() bool {
-	log.Println("♻️ 正在重启引擎...")
-
-	r := GetUrlData("http://127.0.0.1:82/licRestart")
-	if strings.TrimSpace(r) == "" {
-		log.Println("升级服务未启动")
-		return false
-	}
-	if strings.TrimSpace(r) != "OK" {
-		return false
-	}
-
-	err := dao.WS.Start("ws://127.0.0.1:81/ws")
-	if err != nil {
-		log.Println("引擎连接失败：", err)
-		return false
-	}
-
-	res, err := dao.WS.SendWS(dao.Request{Action: "getlic"})
-	if err == nil {
-		if err := json.Unmarshal(res.Data, &dao.Lic); err == nil {
-			log.Println("引擎初始化成功")
-			log.Println("机器码:", dao.Lic.ID)
-		} else {
-			log.Println("授权信息解析错误:", err)
-		}
-	} else {
-		log.Println("引擎初始化错误")
-		return false
-	}
-
-	log.Println("✅  引擎已成功重启并重新连接")
-	return true
-}
-
 func InitProxy() {
 	var scheme, pAddr string
 	var port int64

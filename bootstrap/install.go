@@ -140,7 +140,7 @@ func Install() (bool, string) {
 
 	InitJwtKey()
 	initIptvEpgList()
-	until.RestartLic()
+	dao.WS.RestartLic()
 	return true, "success"
 }
 
