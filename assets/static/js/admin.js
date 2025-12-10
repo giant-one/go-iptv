@@ -672,7 +672,7 @@ function toggleSingleCheck(current, otherId, type) {
 
 function getChannels(id,btn) {
 	var $tr = $(btn).closest("tr");
-	var ctype = $tr.find(".ca-type").data("value"); 
+	var ctype = $tr.find(".ca-type").data("value") || ""; 
     $("#showcaId").val(id);
     $.ajax({
         url: "/admin/channels",

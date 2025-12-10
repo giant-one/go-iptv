@@ -117,6 +117,7 @@ func SaveEpg(params url.Values) dto.ReturnJsonDto {
 	if err := dao.DB.Save(&epgData).Error; err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "保存EPG失败", Type: "danger"}
 	}
+	go until.BindChannel()
 	return dto.ReturnJsonDto{Code: 1, Msg: "EPG " + epgData.Name + "保存成功", Type: "success"}
 }
 
@@ -141,6 +142,7 @@ func BdingEpg(params url.Values) dto.ReturnJsonDto {
 	if err := dao.DB.Save(&epgData).Error; err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "保存EPG失败", Type: "danger"}
 	}
+	go until.BindChannel()
 	return dto.ReturnJsonDto{Code: 1, Msg: "EPG " + epgData.Name + "保存成功", Type: "success"}
 }
 
@@ -355,6 +357,7 @@ func DelEpgList(params url.Values) dto.ReturnJsonDto {
 	// if err := dao.DB.Where("name like ?", epgList.Remarks+"-%").Delete(&models.IptvEpg{}).Error; err != nil {
 	// 	return dto.ReturnJsonDto{Code: 0, Msg: "删除EPG失败:" + err.Error(), Type: "danger"}
 	// }
+	go until.BindChannel()
 	return dto.ReturnJsonDto{Code: 1, Msg: "删除成功", Type: "success"}
 }
 
@@ -376,6 +379,7 @@ func DeleteLogo(params url.Values) dto.ReturnJsonDto {
 
 func DelNotFrom() dto.ReturnJsonDto {
 	dao.DB.Where("id > 18 and (fromlist is null or fromlist = '' or fromlist = ' ')").Delete(&models.IptvEpg{})
+	go until.BindChannel()
 	return dto.ReturnJsonDto{Code: 1, Msg: "删除成功", Type: "success"}
 }
 
