@@ -159,6 +159,11 @@ func CleanMealsXmlCacheAll() {
 	Cache.Rebuild()
 }
 
+func CleanAll() {
+	dao.Cache.Clear()
+	Cache.Rebuild()
+}
+
 func makeMealsXmlCacheAll() {
 	var meals []models.IptvMeals
 	dao.DB.Model(&models.IptvMeals{}).Where("status = 1").Find(&meals)
@@ -173,19 +178,21 @@ func CleanMealsXmlCacheOne(id int64) {
 	GetEpg(id)
 }
 
-func CleanMealsTxtCacheAll() {
+func CleanMealsCacheAll() {
 	var meals []models.IptvMeals
 	dao.DB.Model(&models.IptvMeals{}).Find(&meals)
 	for _, meal := range meals {
 		dao.Cache.Delete("rssMealTxt_" + strconv.FormatInt(meal.ID, 10))
+		dao.Cache.Delete("rssMealM3u8_" + strconv.FormatInt(meal.ID, 10))
 	}
 
 	CleanMealsXmlCacheAll()
 }
 
-func CleanMealsTxtCacheOne(id int64) {
-	log.Println("删除套餐TXT订阅缓存: ", id)
+func CleanMealsCacheOne(id int64) {
+	log.Println("删除套餐订阅缓存: ", id)
 	dao.Cache.Delete("rssMealTxt_" + strconv.FormatInt(id, 10))
+	dao.Cache.Delete("rssMealM3u8_" + strconv.FormatInt(id, 10))
 	CleanMealsXmlCacheOne(id)
 }
 
@@ -197,5 +204,5 @@ func CleanAutoCacheAll() {
 		dao.Cache.Delete("autoCategory_" + strconv.FormatInt(ca.ID, 10))
 		dao.Cache.Delete("autoCategory_" + strconv.FormatInt(ca.ID, 10) + "_show")
 	}
-	CleanMealsTxtCacheAll()
+	CleanMealsCacheAll()
 }

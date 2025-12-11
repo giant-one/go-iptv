@@ -216,8 +216,7 @@ func ClearBind() dto.ReturnJsonDto {
 }
 
 func ClearCache() dto.ReturnJsonDto {
-	dao.Cache.Clear()
-	until.CleanMealsXmlCacheAll()
+	until.CleanAll()
 	return dto.ReturnJsonDto{Code: 1, Msg: "清除缓存成功", Type: "success"}
 }
 

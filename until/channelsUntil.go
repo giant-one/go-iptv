@@ -662,7 +662,15 @@ func GetTxtKu9(id int64) string {
 	return res
 }
 
-func Txt2M3u8(txtData, host, token string) string {
+func Txt2M3u8(id int64, txtData, host, token string) string {
+
+	m3u8CaCheKey := "rssMealM3u8_" + strconv.FormatInt(id, 10)
+	if dao.Cache.Exists(m3u8CaCheKey) {
+		cacheData, err := dao.Cache.GetNotExpired(m3u8CaCheKey)
+		if err == nil {
+			return string(cacheData)
+		}
+	}
 
 	epgURL := host + "/epg/" + token + "/e.xml"
 	logoBase := host + "/logo/"
@@ -720,6 +728,11 @@ func Txt2M3u8(txtData, host, token string) string {
 
 	if err := scanner.Err(); err != nil {
 		log.Println("Txt2M3u8: m3u8解析出错:", err)
+	}
+
+	if err := dao.Cache.Set(m3u8CaCheKey, []byte(builder.String())); err != nil {
+		log.Println("订阅缓存设置失败:", err)
+		dao.Cache.Delete(m3u8CaCheKey)
 	}
 
 	return builder.String()

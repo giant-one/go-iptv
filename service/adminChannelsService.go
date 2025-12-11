@@ -368,7 +368,7 @@ func DelList(params url.Values) dto.ReturnJsonDto {
 	}
 	dao.DB.Where("list_id = ?", iptvCategoryList.ID).Delete(&models.IptvCategory{})
 	dao.DB.Where("list_id = ?", iptvCategoryList.ID).Delete(&models.IptvChannel{})
-	go until.CleanMealsTxtCacheAll() // 删除缓存
+	go until.CleanMealsCacheAll() // 删除缓存
 	return dto.ReturnJsonDto{Code: 1, Msg: fmt.Sprintf("删除列表 %s 成功\n", iptvCategoryList.Name), Type: "success"}
 }
 
@@ -428,7 +428,7 @@ func SubmitMoveUp(params url.Values) dto.ReturnJsonDto {
 	if err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "交换排序失败", Type: "danger"}
 	} else {
-		go until.CleanMealsTxtCacheAll()
+		go until.CleanMealsCacheAll()
 		return dto.ReturnJsonDto{Code: 1, Msg: "交换排序成功", Type: "success"}
 	}
 }
@@ -473,7 +473,7 @@ func SubmitMoveDown(params url.Values) dto.ReturnJsonDto {
 		return dto.ReturnJsonDto{Code: 0, Msg: "交换排序失败", Type: "danger"}
 	}
 
-	go until.CleanMealsTxtCacheAll()
+	go until.CleanMealsCacheAll()
 	return dto.ReturnJsonDto{Code: 1, Msg: "交换排序成功", Type: "success"}
 }
 
@@ -509,7 +509,7 @@ func SubmitMoveTop(params url.Values) dto.ReturnJsonDto {
 	if err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "移动到最上失败", Type: "danger"}
 	}
-	go until.CleanMealsTxtCacheAll()
+	go until.CleanMealsCacheAll()
 	return dto.ReturnJsonDto{Code: 1, Msg: "已移动到最上", Type: "success"}
 }
 
@@ -833,7 +833,7 @@ func SaveCategory(params url.Values) dto.ReturnJsonDto {
 			go until.CleanAutoCacheAll()
 		} else {
 			go until.SyncCaToEpg(new.ID)
-			go until.CleanMealsTxtCacheAll()
+			go until.CleanMealsCacheAll()
 		}
 	} else {
 		caIdInt, err := strconv.ParseInt(caId, 10, 64)
@@ -899,7 +899,7 @@ func SaveCategory(params url.Values) dto.ReturnJsonDto {
 			go until.RemoveCaFromEpg(caIdInt)
 			go until.CleanAutoCacheAll()
 		} else {
-			go until.CleanMealsTxtCacheAll()
+			go until.CleanMealsCacheAll()
 		}
 	}
 	return dto.ReturnJsonDto{Code: 1, Msg: "操作成功", Type: "success"}
