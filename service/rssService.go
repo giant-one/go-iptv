@@ -121,7 +121,7 @@ func GetRss(token, host, t string) string {
 	if t == "t" {
 		return until.GetTxt(aesData.I)
 	} else {
-		return until.Txt2M3u8(aesData.I, until.GetTxt(aesData.I), host, token)
+		return until.GetM3u8(aesData.I, host, token)
 	}
 }
 

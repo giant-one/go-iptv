@@ -1,7 +1,6 @@
 package until
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"go-iptv/dao"
@@ -662,7 +661,7 @@ func GetTxtKu9(id int64) string {
 	return res
 }
 
-func Txt2M3u8(id int64, txtData, host, token string) string {
+func GetM3u8(id int64, host, token string) string {
 
 	m3u8CaCheKey := "rssMealM3u8_" + strconv.FormatInt(id, 10)
 	if dao.Cache.Exists(m3u8CaCheKey) {
@@ -678,56 +677,116 @@ func Txt2M3u8(id int64, txtData, host, token string) string {
 	var builder strings.Builder
 	builder.WriteString(fmt.Sprintf("#EXTM3U url-tvg=\"%s\"\n\n", epgURL))
 
-	scanner := bufio.NewScanner(strings.NewReader(txtData))
-	currentGroup := "未分组"
-	groupName := ""
-	lineNum := 0
+	var meal models.IptvMeals
+	if err := dao.DB.Model(&models.IptvMeals{}).Where("id = ? and status = 1", id).First(&meal).Error; err != nil {
+		return builder.String()
+	}
+	categoryIdList := strings.Split(meal.Content, ",")
+	var categoryList []models.IptvCategory
+	if err := dao.DB.Model(&models.IptvCategory{}).Where("id in (?) and enable = 1", categoryIdList).Order("sort asc").Find(&categoryList).Error; err != nil {
+		return builder.String()
+	}
+	cfg := dao.GetConfig()
 
-	for scanner.Scan() {
-		lineNum++
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
+	for _, category := range categoryList {
+		var channels []models.IptvChannelShow
+		if !strings.Contains(category.Type, "auto") {
+			channels = CaGetChannels(category, false)
+		} else {
+			channels = GetAutoChannelList(category, false)
+		}
+		if len(channels) == 0 {
 			continue
 		}
 
-		if strings.Contains(line, ",#group#") {
-			name := strings.SplitN(line, ",#group#", 2)[0]
-			if name != "" {
-				groupName = name + "-"
+		for _, channel := range channels {
+			if channel.Status == 1 {
+				var logo string = ""
+				var extinf string = ""
+				if channel.EpgName != "" {
+					logo = fmt.Sprintf("%s%s.png", strings.TrimRight(logoBase, "/")+"/", channel.EpgName)
+				}
+				if category.Proxy == 1 && cfg.Proxy.Status == 1 {
+					extinf = fmt.Sprintf(`#EXTINF:-1 tvg-id="%s" tvg-name="%s" tvg-logo="%s" group-title="%s" http-user-agent="%s",%s`,
+						channel.Name, channel.Name, logo, category.Name, category.UA, channel.Name)
+					builder.WriteString(extinf + "\n")
+					builder.WriteString(channel.PUrl + "\n\n")
+					continue
+				}
+				extinf = fmt.Sprintf(`#EXTINF:-1 tvg-id="%s" tvg-name="%s" tvg-logo="%s" group-title="%s" http-user-agent="%s",%s`,
+					channel.Name, channel.Name, logo, category.Name, category.UA, channel.Name)
+				builder.WriteString(extinf + "\n")
+				builder.WriteString(channel.Url + "\n\n")
 			}
-			continue
 		}
-
-		// 检查是否为分组行（如 “中央台,#genre#”）
-		if strings.HasSuffix(line, "#genre#") {
-			currentGroup = groupName + strings.SplitN(line, ",#genre#", 2)[0]
-			continue
-		}
-
-		// 普通频道行
-		parts := strings.SplitN(line, ",", 2)
-		if len(parts) != 2 {
-			fmt.Printf("Txt2M3u8: 第 %d 行格式错误: %s\n", lineNum, line)
-			continue
-		}
-
-		name := strings.TrimSpace(parts[0])
-		url := strings.TrimSpace(parts[1])
-		epgName := GetEpgName(name)
-		var logo string
-		if epgName != "" {
-			logo = fmt.Sprintf("%s%s.png", strings.TrimRight(logoBase, "/")+"/", epgName)
-		}
-
-		// ✅ 生成 #EXTINF 信息
-		extinf := fmt.Sprintf(`#EXTINF:-1 tvg-id="%s" tvg-name="%s" tvg-logo="%s" group-title="%s",%s`,
-			name, name, logo, currentGroup, name)
-		builder.WriteString(extinf + "\n")
-		builder.WriteString(url + "\n\n")
 	}
 
-	if err := scanner.Err(); err != nil {
-		log.Println("Txt2M3u8: m3u8解析出错:", err)
+	if err := dao.Cache.Set(m3u8CaCheKey, []byte(builder.String())); err != nil {
+		log.Println("订阅缓存设置失败:", err)
+		dao.Cache.Delete(m3u8CaCheKey)
+	}
+
+	return builder.String()
+}
+
+func MytvM3u8(id int64, host string) string {
+
+	m3u8CaCheKey := "mytvMealM3u8_" + strconv.FormatInt(id, 10)
+	if dao.Cache.Exists(m3u8CaCheKey) {
+		cacheData, err := dao.Cache.GetNotExpired(m3u8CaCheKey)
+		if err == nil {
+			return string(cacheData)
+		}
+	}
+
+	epgURL := host + "/mytv/" + strconv.FormatInt(id, 10) + "/e.xml"
+	logoBase := host + "/logo/"
+
+	var builder strings.Builder
+	builder.WriteString(fmt.Sprintf("#EXTM3U url-tvg=\"%s\"\n\n", epgURL))
+
+	var meal models.IptvMeals
+	if err := dao.DB.Model(&models.IptvMeals{}).Where("id = ? and status = 1", id).First(&meal).Error; err != nil {
+		return builder.String()
+	}
+	categoryIdList := strings.Split(meal.Content, ",")
+	var categoryList []models.IptvCategory
+	if err := dao.DB.Model(&models.IptvCategory{}).Where("id in (?) and enable = 1", categoryIdList).Order("sort asc").Find(&categoryList).Error; err != nil {
+		return builder.String()
+	}
+	cfg := dao.GetConfig()
+
+	for _, category := range categoryList {
+		var channels []models.IptvChannelShow
+		if !strings.Contains(category.Type, "auto") {
+			channels = CaGetChannels(category, false)
+		} else {
+			channels = GetAutoChannelList(category, false)
+		}
+		if len(channels) == 0 {
+			continue
+		}
+
+		for _, channel := range channels {
+			if channel.Status == 1 {
+				var logo string = ""
+				var extinf string = ""
+				if channel.EpgName != "" {
+					logo = fmt.Sprintf("%s%s.png", strings.TrimRight(logoBase, "/")+"/", channel.EpgName)
+				}
+				if category.Proxy == 1 && cfg.Proxy.Status == 1 {
+					extinf = fmt.Sprintf(`#EXTINF:-1 tvg-id="%s" tvg-name="%s" tvg-logo="%s" group-title="%s" http-user-agent="%s",%s`,
+						channel.Name, channel.Name, logo, category.Name, category.UA, channel.Name)
+					builder.WriteString(extinf + "\n")
+					builder.WriteString(channel.PUrl + "\n\n")
+					continue
+				}
+				extinf = fmt.Sprintf(`#EXTINF:-1 tvg-id="%s" tvg-name="%s" tvg-logo="%s" group-title="%s" http-user-agent="%s",%s`,
+					channel.Name, channel.Name, logo, category.Name, category.UA, channel.Name)
+				builder.WriteString(extinf + "\n")
+				builder.WriteString(channel.Url + "\n\n")
+			}
+		}
 	}
 
 	if err := dao.Cache.Set(m3u8CaCheKey, []byte(builder.String())); err != nil {

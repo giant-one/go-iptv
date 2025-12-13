@@ -1,7 +1,7 @@
 package models
 
 type IptvUser struct {
-	ID          int    `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
+	ID          int64  `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
 	Name        int64  `gorm:"column:name" json:"name"`
 	Mac         string `gorm:"column:mac" json:"mac"`
 	DeviceID    string `gorm:"column:deviceid" json:"deviceid"`

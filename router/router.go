@@ -73,6 +73,7 @@ func InitRouter(debug bool) *gin.Engine {
 	ApkRouter(r, "/apk")
 	AdminRouter(r, "/admin")
 	RssRouter(r, "/")
+	MytvRouter(r, "/mytv")
 
 	loadTemplates(r)
 

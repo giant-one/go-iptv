@@ -37,7 +37,7 @@ func GetRssUrl(c *gin.Context) {
 	c.JSON(200, service.GetRssUrl(id, host, false))
 }
 
-func GetTXTRssM3u(c *gin.Context) {
+func GetRssM3u(c *gin.Context) {
 	token := c.Param("token")
 	if token == "" {
 		c.String(200, "token 参数不存在")
@@ -55,7 +55,7 @@ func GetTXTRssM3u(c *gin.Context) {
 	c.String(200, service.GetRss(token, host, "m"))
 }
 
-func GetTXTRssM3uShortURL(c *gin.Context) {
+func GetRssM3uShortURL(c *gin.Context) {
 	key := c.Param("key")
 	if key == "" {
 		c.String(200, "key参数不存在")
@@ -77,7 +77,7 @@ func GetTXTRssM3uShortURL(c *gin.Context) {
 	c.String(200, service.GetRss(token, host, "m"))
 }
 
-func GetTXTRssTxtShortURL(c *gin.Context) {
+func GetRssTxtShortURL(c *gin.Context) {
 	key := c.Param("key")
 	if key == "" {
 		c.String(200, "key参数不存在")
@@ -99,7 +99,7 @@ func GetTXTRssTxtShortURL(c *gin.Context) {
 	c.String(200, service.GetRss(token, host, "t"))
 }
 
-func GetTXTRssTxt(c *gin.Context) {
+func GetRssTxt(c *gin.Context) {
 	token := c.Param("token")
 	if token == "" {
 		c.String(200, "token 参数不存在")
@@ -117,7 +117,7 @@ func GetTXTRssTxt(c *gin.Context) {
 	c.String(200, service.GetRss(token, host, "t"))
 }
 
-func GetTXTRssTxtKu9ShortURL(c *gin.Context) {
+func GetRssTxtKu9ShortURL(c *gin.Context) {
 	key := c.Param("key")
 	if key == "" {
 		c.String(200, "key参数不存在")
@@ -139,7 +139,7 @@ func GetTXTRssTxtKu9ShortURL(c *gin.Context) {
 	c.String(200, service.GetTxtKu9(token, host))
 }
 
-func GetTXTRssTxtKu9(c *gin.Context) {
+func GetRssTxtKu9(c *gin.Context) {
 	token := c.Param("token")
 	if token == "" {
 		c.String(200, "token 参数不存在")
@@ -157,7 +157,7 @@ func GetTXTRssTxtKu9(c *gin.Context) {
 	c.String(200, service.GetTxtKu9(token, host))
 }
 
-func GetTXTRssEpgShortURL(c *gin.Context) {
+func GetRssEpgShortURL(c *gin.Context) {
 	key := c.Param("key")
 	if key == "" {
 		c.String(200, "key参数不存在")
@@ -190,10 +190,10 @@ func GetTXTRssEpgShortURL(c *gin.Context) {
 	c.Data(200, "text/xml", xmlData)
 }
 
-// GetTXTRssEpg 处理获取TXT格式RSS EPG的请求
+// GetRssEpg 处理获取TXT格式RSS EPG的请求
 // 参数:
 //   - c: Gin框架的上下文对象，包含请求和响应信息
-func GetTXTRssEpg(c *gin.Context) {
+func GetRssEpg(c *gin.Context) {
 	token := c.Param("token")
 	if token == "" {
 		c.String(200, "token 参数不存在")
