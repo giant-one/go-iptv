@@ -107,7 +107,7 @@ func InitRouter(debug bool) *gin.Engine {
 
 		if until.GetFileSize("/config/app/清和IPTV-mytv.apk") != "0 MB" {
 			pageData.ShowDownMyTV = true
-			pageData.MyTVName = "清和IPTV-mytv-1.2.0." + cfg.MyTV.Version + ".apk"
+			pageData.MyTVName = "清和IPTV-1.2.0." + cfg.MyTV.Version + ".apk"
 			pageData.MyTVUrl = "/app/清和IPTV-mytv.apk"
 		}
 
