@@ -7,6 +7,7 @@ import (
 	"go-iptv/until"
 	"log"
 	"net/url"
+	"strconv"
 	"time"
 )
 
@@ -36,6 +37,17 @@ func SetMyTVAppInfo(params url.Values) dto.ReturnJsonDto {
 	if appName == "" || appVersion == "" || appServerUrl == "" {
 		return dto.ReturnJsonDto{Code: 0, Msg: "参数错误", Type: "danger"}
 	}
+
+	appVersionInt, err := strconv.ParseInt(appVersion, 10, 64)
+	if err != nil {
+		return dto.ReturnJsonDto{Code: 0, Msg: "版本号为纯数字", Type: "danger"}
+	}
+	appVersion = strconv.FormatInt(appVersionInt, 10)
+
+	if appVersionInt <= 0 || appVersionInt > 999 {
+		return dto.ReturnJsonDto{Code: 0, Msg: "版本号范围为1-999的纯数字", Type: "danger"}
+	}
+
 	cfg := dao.GetConfig()
 
 	if cfg.MyTV.Version == appVersion {
