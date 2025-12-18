@@ -21,15 +21,8 @@
                     <div class="introduceone">最任性、最好用的直播软件</div>
                     <div class="introducetwo">清和电视直播运行于智能电视机顶盒或者智能电视机，操作简单，集直播、回看、预约、一周节目表(EPG)于一身，继承传统的上下键换台，无需任何学习，下载即可上手。具有行业领先的频道收藏、隐藏、WIFI传源等功能。</div>
                     <div class="donwload">
-                        <div class="introducethree"> 
-                            <span>更新时间：{{if eq .Status 1}}APK编译中，请稍后...{{else}}{{ .ApkTime }}{{end}}</span> 
-                            <span>版本号：{{if eq .Status 1}}APK编译中，请稍后...{{else}}{{ .ApkTime }}{{end}}</span> 
-                        </div> 
-                        <div class="introducefour"> 
-                            <span>大小：{{if eq .Status 1}}APK编译中，请稍后...{{else}}{{ .ApkSize }}{{end}}</span> 
-                            <span>系统：Android 4.0+</span>
-                        </div>
-                        {{if eq .Status 1}}APK编译中，请稍后...{{else}}<a id="downurl" href="{{ .ApkUrl }}" download="{{ .ApkName }}">{{ .ApkName }} (骆驼)</a> {{end}}
+                        
+                        {{if .ShowDown }}<a id="downurl" href="{{ .ApkUrl }}" download="{{ .ApkName }}">{{ .ApkName }} (骆驼)</a> {{end}}
                         {{if .ShowDownMyTV }}<p><a id="downurl" href="{{ .MyTVUrl }}" ownload="{{ .MyTVName }}">{{ .MyTVName }}</a></p>{{end}}
                         <p><a id="managementurl" href="/admin" management="{{ SiteName }}">{{ SiteName }}</a></p>
                     </div>

@@ -99,18 +99,11 @@ func InitRouter(debug bool) *gin.Engine {
 
 		cfg := dao.GetConfig()
 
-		timeStr, err := until.GetFileModTimeStr("/config/app/" + cfg.Build.Name + ".apk")
-		if err != nil || until.GetFileSize("/config/app/"+cfg.Build.Name+".apk") == "0 MB" {
-			pageData.ApkTime = "未知"
-		} else {
-			pageData.ApkTime = timeStr
-			pageData.ApkName = cfg.Build.Name + ".apk"
-			pageData.ApkVersion = cfg.Build.Version
-			pageData.ApkSize = until.GetFileSize("/config/app/" + cfg.Build.Name + ".apk")
-			pageData.ApkUrl = "/app/" + cfg.Build.Name + ".apk"
+		if until.GetFileSize("/config/app/"+cfg.Build.Name+".apk") != "0 MB" {
+			pageData.ShowDown = true
+			pageData.ApkName = cfg.Build.Name + "-" + cfg.Build.Version + ".apk"
+			pageData.ApkUrl = "/app/" + cfg.Build.Name + "-" + cfg.Build.Version + ".apk"
 		}
-
-		pageData.Status = bootstrap.GetBuildStatus()
 
 		if until.GetFileSize("/config/app/"+cfg.MyTV.Name+"-mytv.apk") != "0 MB" {
 			pageData.ShowDownMyTV = true

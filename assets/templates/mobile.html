@@ -12,7 +12,8 @@
 <body>
     <div class="mobile-ct-wrapperone">
         <img src="/static/images/wrapperonemobilebg.jpg" />
-        {{if eq .Status 1}}APK编译中，请稍后...{{else}}<a id="downurl" href="{{ .ApkUrl }}" download="{{ .ApkName }}">安卓手机版下载</a>{{end}}
+        {{if .ShowDown }}<a id="downurl" href="{{ .ApkUrl }}" download="{{ .ApkName }}">{{ .ApkName }} (骆驼)</a> {{end}}
+        {{if .ShowDownMyTV }}<p><a id="downurl" href="{{ .MyTVUrl }}" ownload="{{ .MyTVName }}">{{ .MyTVName }}</a></p>{{end}}
         <p><a id="managementurl" href="/admin" management="{{ SiteName }}">{{ SiteName }}</a></p>
     </div>
     <div class="mobile-ct-wrapperthree">
