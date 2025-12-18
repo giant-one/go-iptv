@@ -30,7 +30,7 @@ RUN chmod +x iptv license start
 # ================================
 # Final Image
 # ================================
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:17-jdk-alpine
 
 ENV TZ=Asia/Shanghai
 ENV ANDROID_HOME=/opt/android-sdk
