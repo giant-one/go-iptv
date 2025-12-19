@@ -24,7 +24,7 @@ RUN case "$TARGETARCH" in \
       *) echo "未知架构: $TARGETARCH" && exit 1 ;; \
     esac
 
-RUN chmod +x iptv license start
+RUN chmod +x iptv license start apktool/apktool*
 
 
 # ================================
@@ -42,6 +42,11 @@ WORKDIR /app
 VOLUME /config
 EXPOSE 80 8080
 
+# 应用资源
+COPY apktool/apktool apktool/apktool.jar /usr/bin/
+COPY client /client
+COPY static database logo /app/
+
 # 基础依赖
 RUN apk add --no-cache \
     bash \
@@ -57,34 +62,20 @@ RUN apk add --no-cache \
     tzdata \
     && cp /usr/share/zoneinfo/${TZ} /etc/localtime \
     && echo ${TZ} > /etc/timezone \
-    && rm -rf /var/lib/apt/lists/*
-
-# Android build-tools（apksigner / zipalign）
-RUN mkdir -p ${ANDROID_HOME}/build-tools \
- && curl -L -o /tmp/build-tools.zip \
-    https://dl.google.com/android/repository/build-tools_r33.0.2-linux.zip \
- && unzip /tmp/build-tools.zip -d  /tmp/build-tools \
- && mv /tmp/build-tools/android-13/* \
-       ${ANDROID_HOME}/build-tools \
- && rm -rf /tmp/build-tools*
-
-# apktool
-COPY apktool/apktool /usr/bin/apktool
-COPY apktool/apktool.jar /usr/bin/apktool.jar
-RUN chmod +x /usr/bin/apktool*
-
-# 应用资源
-COPY client /client
-COPY static /app/static
-COPY database /app/database
-COPY logo /app/logo
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p ${ANDROID_HOME}/build-tools \
+    && curl -L -o /tmp/build-tools.zip \
+        https://dl.google.com/android/repository/build-tools_r33.0.2-linux.zip \
+    && unzip /tmp/build-tools.zip -d  /tmp/build-tools \
+    && mv /tmp/build-tools/android-13/* \
+        ${ANDROID_HOME}/build-tools \
+    && rm -rf /tmp/build-tools*
 
 COPY config.yml README.md dictionary.txt alias.json ChangeLog.md Version MyTV.apk keystore.p12 /app/
 COPY license_all/Version_lic /app/Version_lic
 
 # Go 程序
-COPY --from=builder /app/iptv /app/iptv
-COPY --from=builder /app/license /app/license
-COPY --from=builder /app/start /app/start
+COPY --from=builder /app/iptv /app/license /app/start /app/
+
 
 CMD ["./start"]
