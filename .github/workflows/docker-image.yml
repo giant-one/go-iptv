@@ -36,7 +36,7 @@ jobs:
           if [[ "$TAG_NAME" == *beta* ]]; then
             echo "archs=amd64" >> $GITHUB_OUTPUT
           else
-            echo "archs=amd64,arm64,arm" >> $GITHUB_OUTPUT
+            echo "archs=amd64,arm64" >> $GITHUB_OUTPUT
           fi
 
       - name: Build binaries
