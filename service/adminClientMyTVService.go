@@ -14,6 +14,10 @@ import (
 var BuildStatus int64 = 0
 
 func SetMyTVAppInfo(params url.Values) dto.ReturnJsonDto {
+	_, err := until.CheckLicVer("v2.1.5")
+	if err != nil {
+		return dto.ReturnJsonDto{Code: 0, Msg: err.Error(), Type: "danger"}
+	}
 
 	var status int64 = 0
 	res, err := dao.WS.SendWS(dao.Request{Action: "getMyTVBuildStatus"})

@@ -23,7 +23,7 @@ func GetRssUrl(c *gin.Context) {
 
 	host := c.Request.Host
 	if !until.IsValidHost(host) {
-		c.String(200, "host不合法")
+		c.String(200, "参数错误3")
 		return
 	}
 	host = fmt.Sprintf("%s://%s", scheme, host)
@@ -40,14 +40,14 @@ func GetRssUrl(c *gin.Context) {
 func GetRssM3u(c *gin.Context) {
 	token := c.Param("token")
 	if token == "" {
-		c.String(200, "token 参数不存在")
+		c.String(200, "参数错误1")
 		return
 	}
 	scheme := GetClientScheme(c)
 
 	host := c.Request.Host
 	if !until.IsValidHost(host) {
-		c.String(200, "host不合法")
+		c.String(200, "参数错误3")
 		return
 	}
 	host = fmt.Sprintf("%s://%s", scheme, host)
@@ -58,20 +58,20 @@ func GetRssM3u(c *gin.Context) {
 func GetRssM3uShortURL(c *gin.Context) {
 	key := c.Param("key")
 	if key == "" {
-		c.String(200, "key参数不存在")
+		c.String(200, "参数错误2")
 		return
 	}
 	scheme := GetClientScheme(c)
 
 	host := c.Request.Host
 	if !until.IsValidHost(host) {
-		c.String(200, "host不合法")
+		c.String(200, "参数错误3")
 		return
 	}
 	host = fmt.Sprintf("%s://%s", scheme, host)
 	token := service.GetRssToken(key)
 	if token == "" {
-		c.String(200, "token 参数不存在")
+		c.String(200, "参数错误4")
 		return
 	}
 	c.String(200, service.GetRss(token, host, "m"))
@@ -80,20 +80,20 @@ func GetRssM3uShortURL(c *gin.Context) {
 func GetRssTxtShortURL(c *gin.Context) {
 	key := c.Param("key")
 	if key == "" {
-		c.String(200, "key参数不存在")
+		c.String(200, "参数错误2")
 		return
 	}
 	scheme := GetClientScheme(c)
 
 	host := c.Request.Host
 	if !until.IsValidHost(host) {
-		c.String(200, "host不合法")
+		c.String(200, "参数错误3")
 		return
 	}
 	host = fmt.Sprintf("%s://%s", scheme, host)
 	token := service.GetRssToken(key)
 	if token == "" {
-		c.String(200, "token 参数不存在")
+		c.String(200, "参数错误4")
 		return
 	}
 	c.String(200, service.GetRss(token, host, "t"))
@@ -102,14 +102,14 @@ func GetRssTxtShortURL(c *gin.Context) {
 func GetRssTxt(c *gin.Context) {
 	token := c.Param("token")
 	if token == "" {
-		c.String(200, "token 参数不存在")
+		c.String(200, "参数错误1")
 		return
 	}
 	scheme := GetClientScheme(c)
 
 	host := c.Request.Host
 	if !until.IsValidHost(host) {
-		c.String(200, "host不合法")
+		c.String(200, "参数错误3")
 		return
 	}
 	host = fmt.Sprintf("%s://%s", scheme, host)
@@ -120,20 +120,20 @@ func GetRssTxt(c *gin.Context) {
 func GetRssTxtKu9ShortURL(c *gin.Context) {
 	key := c.Param("key")
 	if key == "" {
-		c.String(200, "key参数不存在")
+		c.String(200, "参数错误2")
 		return
 	}
 	scheme := GetClientScheme(c)
 
 	host := c.Request.Host
 	if !until.IsValidHost(host) {
-		c.String(200, "host不合法")
+		c.String(200, "参数错误3")
 		return
 	}
 	host = fmt.Sprintf("%s://%s", scheme, host)
 	token := service.GetRssToken(key)
 	if token == "" {
-		c.String(200, "token 参数不存在")
+		c.String(200, "参数错误4")
 		return
 	}
 	c.String(200, service.GetTxtKu9(token, host))
@@ -142,14 +142,14 @@ func GetRssTxtKu9ShortURL(c *gin.Context) {
 func GetRssTxtKu9(c *gin.Context) {
 	token := c.Param("token")
 	if token == "" {
-		c.String(200, "token 参数不存在")
+		c.String(200, "参数错误1")
 		return
 	}
 	scheme := GetClientScheme(c)
 
 	host := c.Request.Host
 	if !until.IsValidHost(host) {
-		c.String(200, "host不合法")
+		c.String(200, "参数错误3")
 		return
 	}
 	host = fmt.Sprintf("%s://%s", scheme, host)
@@ -160,20 +160,20 @@ func GetRssTxtKu9(c *gin.Context) {
 func GetRssEpgShortURL(c *gin.Context) {
 	key := c.Param("key")
 	if key == "" {
-		c.String(200, "key参数不存在")
+		c.String(200, "参数错误2")
 		return
 	}
 	scheme := GetClientScheme(c)
 
 	host := c.Request.Host
 	if !until.IsValidHost(host) {
-		c.String(200, "host不合法")
+		c.String(200, "参数错误3")
 		return
 	}
 	host = fmt.Sprintf("%s://%s", scheme, host)
 	token := service.GetRssToken(key)
 	if token == "" {
-		c.String(200, "token 参数不存在")
+		c.String(200, "参数错误4")
 		return
 	}
 	tv := service.GetRssEpg(token, host)
@@ -196,14 +196,14 @@ func GetRssEpgShortURL(c *gin.Context) {
 func GetRssEpg(c *gin.Context) {
 	token := c.Param("token")
 	if token == "" {
-		c.String(200, "token 参数不存在")
+		c.String(200, "参数错误1")
 		return
 	}
 	scheme := GetClientScheme(c)
 
 	host := c.Request.Host
 	if !until.IsValidHost(host) {
-		c.String(200, "host不合法")
+		c.String(200, "参数错误3")
 		return
 	}
 	host = fmt.Sprintf("%s://%s", scheme, host)

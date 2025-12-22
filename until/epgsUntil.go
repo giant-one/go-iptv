@@ -170,7 +170,7 @@ func UpdataEpgList() bool {
 				if reload {
 					go BindChannel() // 绑定频道
 				}
-				// CleanMealsXmlCacheAll() // 清除缓存
+				// CleanMealsEpgCacheAll() // 清除缓存
 			}
 		}
 	}
@@ -309,7 +309,7 @@ func BindChannel() bool {
 	if cfg.Epg.Fuzz == 1 && dao.Lic.Type != 0 {
 		dao.WS.SendWS(dao.Request{Action: "checkChEpg"})
 	}
-	go CleanAutoCacheAll() // 清理缓存
+	go CleanMealsEpgCacheAll() // 清理缓存
 	return true
 }
 

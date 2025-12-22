@@ -216,7 +216,7 @@ func ClearBind() dto.ReturnJsonDto {
 }
 
 func ClearCache() dto.ReturnJsonDto {
-	go until.CleanMealsXmlCacheAll()
+	go until.CleanMealsEpgCacheAll()
 	return dto.ReturnJsonDto{Code: 1, Msg: "清除缓存成功", Type: "success"}
 }
 
@@ -301,7 +301,7 @@ func UploadLogo(c *gin.Context) dto.ReturnJsonDto {
 	if err := c.SaveUploadedFile(file, dst); err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "保存文件失败:" + err.Error(), Type: "danger"}
 	}
-	go until.CleanMealsXmlCacheAll()
+	go until.CleanMealsEpgCacheAll()
 	return dto.ReturnJsonDto{Code: 1, Msg: "上传成功", Type: "success"}
 }
 

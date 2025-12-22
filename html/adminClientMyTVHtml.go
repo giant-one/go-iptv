@@ -1,6 +1,7 @@
 package html
 
 import (
+	"go-iptv/assets"
 	"go-iptv/dao"
 	"go-iptv/dto"
 	"go-iptv/service"
@@ -28,6 +29,7 @@ func ClientMyTV(c *gin.Context) {
 		ApkName:     "清和IPTV-mytv.apk",
 		ApkUrl:      "/app/清和IPTV-mytv.apk", // APK下载地址
 		UpSize:      until.GetFileSize("/config/app/清和IPTV-mytv.apk"),
+		BaseVerson:  string(assets.MyTVApkVersion),
 		ServerUrl:   cfg.ServerUrl,
 		BuildStatus: service.BuildStatus,
 	}

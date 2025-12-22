@@ -428,7 +428,7 @@ func SubmitMoveUp(params url.Values) dto.ReturnJsonDto {
 	if err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "交换排序失败", Type: "danger"}
 	} else {
-		go until.CleanMealsCacheAll()
+		go until.CleanMealsRssCacheAll()
 		return dto.ReturnJsonDto{Code: 1, Msg: "交换排序成功", Type: "success"}
 	}
 }
@@ -473,7 +473,7 @@ func SubmitMoveDown(params url.Values) dto.ReturnJsonDto {
 		return dto.ReturnJsonDto{Code: 0, Msg: "交换排序失败", Type: "danger"}
 	}
 
-	go until.CleanMealsCacheAll()
+	go until.CleanMealsRssCacheAll()
 	return dto.ReturnJsonDto{Code: 1, Msg: "交换排序成功", Type: "success"}
 }
 
@@ -509,7 +509,7 @@ func SubmitMoveTop(params url.Values) dto.ReturnJsonDto {
 	if err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "移动到最上失败", Type: "danger"}
 	}
-	go until.CleanMealsCacheAll()
+	go until.CleanMealsRssCacheAll()
 	return dto.ReturnJsonDto{Code: 1, Msg: "已移动到最上", Type: "success"}
 }
 
@@ -898,7 +898,7 @@ func SaveCategory(params url.Values) dto.ReturnJsonDto {
 			go until.RemoveCaFromEpg(caIdInt)
 			go until.CleanAutoCacheAll()
 		} else {
-			go until.CleanMealsCacheAll()
+			go until.CleanMealsRssCacheAll()
 		}
 	}
 	return dto.ReturnJsonDto{Code: 1, Msg: "操作成功", Type: "success"}

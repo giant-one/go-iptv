@@ -3,10 +3,12 @@ package api
 import (
 	"encoding/xml"
 	"fmt"
+	"go-iptv/assets"
 	"go-iptv/dto"
 	"go-iptv/service"
 	"go-iptv/until"
 	"log"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,7 +18,7 @@ func MytvGetUserM3U8(c *gin.Context) {
 	deviceId := c.Query("deviceId") // 不存在时返回 ""
 
 	if ts == "" || deviceId == "" {
-		c.String(200, "参数错误")
+		c.String(200, "参数错误1")
 		return
 	}
 
@@ -26,7 +28,7 @@ func MytvGetUserM3U8(c *gin.Context) {
 
 	host := c.Request.Host
 	if !until.IsValidHost(host) {
-		c.String(200, "host不合法")
+		c.String(200, "参数错误2")
 		return
 	}
 	host = fmt.Sprintf("%s://%s", scheme, host)
@@ -65,4 +67,12 @@ func getQingh() string {
 	}
 	output, _ := xml.MarshalIndent(res, "", "  ")
 	return string(output)
+}
+
+func BaseApk(c *gin.Context) {
+	c.FileFromFS("baseApk/MyTV.apk", http.FS(assets.MyTVApk))
+}
+
+func BaseVersion(c *gin.Context) {
+	c.String(200, string(assets.MyTVApkVersion))
 }

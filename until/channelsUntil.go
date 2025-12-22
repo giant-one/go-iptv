@@ -299,6 +299,7 @@ func AddChannelList(srclist string, cId, listId int64, doRepeat bool) (int, erro
 		}); err != nil {
 			return 0, err
 		}
+		CleanMealsRssCacheAll()
 		BindChannel()
 		return 0, nil
 	}
@@ -488,11 +489,34 @@ func AddChannelList(srclist string, cId, listId int64, doRepeat bool) (int, erro
 
 	// 只有当有新增或删除时才执行异步更新
 	if len(newChannels) > 0 || len(delIDs) > 0 {
+		go checkInMeals(cId)
+		// 新增日志输出
+		dao.DB.Model(&models.IptvCategory{}).Where("id = ?", cId).Update("rawcount", rawCount)
+	}
+	log.Printf("订阅频道数量: %d", rawCount)
+
+	return repetNum, nil
+}
+
+func checkInMeals(id int64) {
+	var count int64
+	idStr := fmt.Sprintf("%d", id)
+
+	err := dao.DB.Model(&models.IptvMeals{}).
+		Where("(content = ? OR content LIKE ? OR content LIKE ? OR content LIKE ?) AND status = 1",
+			idStr,           // 单独一个值
+			idStr+",%",      // 开头
+			"%,"+idStr+",%", // 中间
+			"%,"+idStr,      // 结尾
+		).
+		Count(&count).Error
+	if err != nil {
+		return
+	}
+	if count > 0 {
+		CleanMealsRssCacheAll()
 		BindChannel()
 	}
-	log.Printf("订阅频道数量: %d", rawCount) // 新增日志输出
-	dao.DB.Model(&models.IptvCategory{}).Where("id = ?", cId).Update("rawcount", rawCount)
-	return repetNum, nil
 }
 
 func SyncCaToEpg(caId int64) {

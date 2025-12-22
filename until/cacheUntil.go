@@ -109,19 +109,18 @@ func doRebuild(ctx context.Context) {
 		log.Println("⚠️ 重建任务被中断")
 		return
 	default:
-		makeMealsXmlCacheAll()
+		makeMealsEpgCacheAll()
 		log.Println("✅ EPG缓存重建任务执行完成")
 		cfg := dao.GetConfig()
 		if cfg.Resolution.Auto == 1 && dao.Lic.Type != 0 {
-			log.Println("🚀 开始执行分辨率识别任务")
-			log.Println("开始执行分辨率测试，测试期间cpu、内存占用会较高，请耐心等待，中断执行请关闭自动测试并重启引擎")
+
 			res, err := dao.WS.SendWS(dao.Request{Action: "testResolutionAll"}) //测试分辨率
 			if err != nil {
-				log.Println("分辨率测试失败:", err)
+				log.Println("引擎连接失败:", err)
 			} else if res.Code != 1 {
 				log.Println("分辨率测试失败:", res.Msg)
 			} else {
-				log.Println("分辨率测试任务执行中...")
+				log.Println("🚀 开始执行分辨率全量识别任务，测试期间cpu、内存占用会较高，请耐心等待，强制中断执行请关闭自动测试并重启引擎")
 
 				res, _ := dao.WS.SendWS(dao.Request{Action: "getTestStatus"}) //获取测试状态
 				for res.Code != 1 {
@@ -131,7 +130,7 @@ func doRebuild(ctx context.Context) {
 				log.Println("分辨率测试完成")
 				log.Println("🚀 重新执行EPG缓存重建")
 				dao.Cache.Clear() //清除缓存
-				makeMealsXmlCacheAll()
+				makeMealsEpgCacheAll()
 				log.Println("✅ EPG缓存重建任务执行完成")
 			}
 		}
@@ -150,7 +149,7 @@ func InitCacheRebuild() {
 	select {}
 }
 
-func CleanMealsXmlCacheAll() {
+func CleanMealsEpgCacheAll() {
 	dao.Cache.Delete("rssEpgXml_*")
 	Cache.Rebuild()
 }
@@ -160,7 +159,7 @@ func CleanAll() {
 	Cache.Rebuild()
 }
 
-func makeMealsXmlCacheAll() {
+func makeMealsEpgCacheAll() {
 	var meals []models.IptvMeals
 	dao.DB.Model(&models.IptvMeals{}).Where("status = 1").Find(&meals)
 	for _, meal := range meals {
@@ -174,7 +173,7 @@ func CleanMealsXmlCacheOne(id int64) {
 	GetEpg(id)
 }
 
-func CleanMealsCacheAll() {
+func CleanMealsRssCacheAll() {
 	dao.Cache.Delete("rssMeal*")
 	dao.Cache.Delete("mytvMeal*")
 }
@@ -183,7 +182,7 @@ func CleanMealsCacheAllRebuild() {
 	dao.Cache.Delete("rssMeal*")
 	dao.Cache.Delete("mytvMeal*")
 	dao.Cache.Delete("rssEpgXml_*")
-	CleanMealsXmlCacheAll()
+	CleanMealsEpgCacheAll()
 }
 
 func CleanMealsCacheOne(id int64) {
@@ -195,13 +194,13 @@ func CleanMealsCacheOne(id int64) {
 
 func CleanAutoCacheAll() {
 	dao.Cache.Delete("autoCategory_*")
-	CleanMealsCacheAll()
+	CleanMealsRssCacheAll()
 }
 
 func CleanAutoCacheAllRebuild() {
 	dao.Cache.Delete("autoCategory_*")
-	CleanMealsCacheAll()
-	CleanMealsXmlCacheAll()
+	CleanMealsRssCacheAll()
+	CleanMealsEpgCacheAll()
 }
 
 func CleanMealsCacheRebuildOne(id int64) {
