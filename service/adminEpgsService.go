@@ -43,51 +43,20 @@ func GetChName(params url.Values) dto.ReturnJsonDto {
 	for _, v := range channeList {
 		var data dto.EpgsReturnDto
 		data.Name = v.Name
-		data.Select = false
+		data.Value = v.Name
+		data.Selected = false
 		for _, v1 := range CheckList {
 			if strings.EqualFold(v1, v.Name) {
-				data.Select = true
+				data.Selected = true
+				break
 			}
 		}
 		if strings.EqualFold(epg.Name, v.Name) {
-			data.Select = true
+			data.Selected = true
 		}
 		dataList = append(dataList, data)
 	}
 
-	return dto.ReturnJsonDto{Code: 1, Msg: "操作成功", Type: "success", Data: dataList}
-}
-
-func GetCa(params url.Values) dto.ReturnJsonDto {
-	epgId := params.Get("epgGetCa")
-	if epgId == "" {
-		return dto.ReturnJsonDto{Code: 0, Msg: "EPG id不能为空", Type: "danger"}
-	}
-
-	var epg models.IptvEpg
-	if err := dao.DB.Where("id = ?", epgId).First(&epg).Error; err != nil {
-		return dto.ReturnJsonDto{Code: 0, Msg: "查询EPG 失败", Type: "danger"}
-	}
-
-	var caList []models.IptvCategory
-	if err := dao.DB.Model(&models.IptvCategory{}).Where("enable = 1 and type not like ?", "auto%").Find(&caList).Error; err != nil {
-		return dto.ReturnJsonDto{Code: 0, Msg: "查询分组失败", Type: "danger"}
-	}
-
-	caIdList := strings.Split(epg.CasStr, ",")
-	var dataList []dto.EpgsReturnDto
-	for _, v := range caList {
-		var data dto.EpgsReturnDto
-		data.Id = v.ID
-		data.Name = v.Name
-		data.Select = false
-		for _, v1 := range caIdList {
-			if strings.EqualFold(v1, fmt.Sprintf("%d", v.ID)) {
-				data.Select = true
-			}
-		}
-		dataList = append(dataList, data)
-	}
 	return dto.ReturnJsonDto{Code: 1, Msg: "操作成功", Type: "success", Data: dataList}
 }
 
@@ -123,11 +92,12 @@ func SaveEpg(params url.Values) dto.ReturnJsonDto {
 
 func BdingEpg(params url.Values) dto.ReturnJsonDto {
 	id := params.Get("epgId")
+	chList := params.Get("chList")
 	if id == "" {
 		return dto.ReturnJsonDto{Code: 0, Msg: "EPG id不能为空", Type: "danger"}
 	}
 
-	namesList := params["names[]"]
+	namesList := strings.Split(chList, ",")
 
 	var epgData models.IptvEpg
 
@@ -137,6 +107,13 @@ func BdingEpg(params url.Values) dto.ReturnJsonDto {
 		}
 		return dto.ReturnJsonDto{Code: 0, Msg: "查询EPG失败", Type: "danger"}
 	}
+
+	oldList := strings.Split(epgData.Content, ",")
+
+	if until.EqualStringSets(oldList, namesList) {
+		return dto.ReturnJsonDto{Code: 0, Msg: "EPG " + epgData.Name + "绑定未修改", Type: "success"}
+	}
+
 	epgData.Content = strings.Join(namesList, ",")
 
 	if err := dao.DB.Save(&epgData).Error; err != nil {

@@ -20,7 +20,7 @@ type AdminEpgsDto struct {
 }
 
 type EpgsReturnDto struct {
-	Id     int64  `json:"id"`
-	Name   string `json:"name"`
-	Select bool   `json:"select"`
+	Value    string `json:"value"`
+	Name     string `json:"name"`
+	Selected bool   `json:"selected"`
 }

@@ -22,8 +22,8 @@ func Epgs(c *gin.Context) {
 		switch k {
 		case "bdingepg":
 			res = service.GetChName(params)
-		case "epgGetCa":
-			res = service.GetCa(params)
+		// case "epgGetCa":
+		// 	res = service.GetCa(params)
 		case "save_epg":
 			res = service.SaveEpg(params)
 		case "bding_save_epg":

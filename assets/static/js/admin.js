@@ -215,22 +215,6 @@ function checkboxall(a){
 		}
 	}
 }
-function checkboxAllName(a){
-	var ck=document.getElementsByName("names[]");
-	for (var i = 0; i < ck.length; i++) {
-		if(a.checked){
-			ck[i].checked=true;
-		}else{
-			ck[i].checked=false;
-		}
-	}
-}
-function clearCheck(){
-	var ck=document.getElementsByName("names[]");
-	for (var i = 0; i < ck.length; i++) {
-		ck[i].checked=false;
-	}
-}
 function tdBtnPOST(btn) {
 	var action =  window.location.href; 
 	var params = new URLSearchParams();
@@ -403,6 +387,7 @@ function epgsGetChannel(btn) {
 	})
 	.then(async response => {
 		const text = await response.text(); 
+		console.log(text);
 		if (text.includes('/admin/login')) {
 			window.location.href = "/admin/login";
 			throw text;
@@ -410,25 +395,17 @@ function epgsGetChannel(btn) {
 		return JSON.parse(text); 
 	})
 	.then(res => {
-		if (res.type === "success") {
-			if (res.data && res.data.length > 0) {
-				var html = "";
-				res.data.forEach(function(item) {
-					html += '<label class="lyear-checkbox checkbox-inline">';
-					html += '<div style=" float: left;background: ' + (item.select ? '#7fff00;' : '#E7E7E7;') +' margin-right: 3px; margin-bottom: 3px; padding: 2px 5px;">';
-					html += '<input type="checkbox" name="names[]" value="' + item.name + '"' 
-							+ (item.select ? ' checked="checked"' : '') + '>';
-					html += '<span>' + item.name + '</span></div>';
-					html += '</label>';
-				});
-				$(".form-inline.epg-checkbox").html(html);
-			}else{
-				$(".form-inline.epg-checkbox").html("<span>无数据</span>");
-			}
+		console.log(res);
+		if (res.code === 1) {
+			console.log(res.data);
+			epgChSelect.update({data: res.data});
 		}else{
 			lightyear.notify(res.msg, res.type, 3000);
 		}
 	})
+	.catch(err => {
+		lightyear.notify("提交失败"+err, "danger", 3000);
+	});
 }
 function uploadIcon(event) {
 	const file = event.target.files[0];

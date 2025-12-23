@@ -157,22 +157,17 @@
                                                                         <div class="input-group-btn">
 																			<input type="hidden" id="epgId1" name="epgId" style="width: 0px;" value="">
                                                                             <input class="form-control" type="text" id="epgName1" style="width: 125px;" placeholder="EPG名称" value="" disabled>&nbsp;&nbsp;
-                                                                            <button class="btn btn-default"  type="button" onclick="clearCheck()" name="clearbind">清空绑定</button>
+                                                                            <button class="btn btn-default"  type="button" onclick="epgChSelect.setValue([ ])" name="clearbind">清空绑定</button>
                                                                         </div>
                                                                     </div>
                                                                 </td>
                                                             </tr>
-                                                            <tr>
-                                                                <td>
-                                                                    <label class="lyear-checkbox m-b-10">
-																		<input type="checkbox" onclick="checkboxAllName(this)">
-																		<span>全选/反选</span>
-																	</label>
-                                                                    <div class="form-inline epg-checkbox">
-																	</div>
-                                                                </td>
-                                                            </tr>
+                                                                    
                                                         </table>
+														<div class="form-inline">
+															<div id="epgChSelect"></div>
+															<div style="height: 300px;"></div>
+														</div>
 													</div>
 													<div class="modal-footer">
 														<button type="button" onclick="submitFormPOST(this)" class="btn btn-primary" id="edit_save_epg" name="bding_save_epg">确定</button>
@@ -232,6 +227,19 @@ var epgCaSelect = xmSelect.render({
 		{name: '{{.Name}}', value: {{.ID}}},
 		{{end}}
 	]
+})
+
+var epgChSelect = xmSelect.render({
+	el: '#epgChSelect', 
+	name: 'chList',
+	autoRow: true,
+	tips: '手动绑定频道', 
+	filterable: true,
+	paging: true,
+	pageSize: 5,
+	direction: 'down',
+	toolbar: {show: true, list: ['ALL', 'CLEAR', 'REVERSE']},
+	data:[],
 })
 </script>
 {{ template "admin_footer" . }}
