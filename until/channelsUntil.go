@@ -379,6 +379,9 @@ func AddChannelList(srclist string, cId, listId int64, doRepeat bool) (int, erro
 		}
 
 		parts := strings.SplitN(line, ",", 2)
+		if len(parts) < 2 {
+			continue
+		}
 		channelName := parts[0]
 
 		var chStatus int64 = 1

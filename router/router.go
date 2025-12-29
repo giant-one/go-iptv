@@ -49,7 +49,7 @@ func InitRouter(debug bool) *gin.Engine {
 		"Add":      func(a, b int64) int64 { return a + b },
 		"Sub":      func(a, b int64) int64 { return a - b },
 		"DisPay":   func() int64 { return dao.GetConfig().System.DisPay },
-		"IsLic":    func() bool { return (dao.Lic.Type == 1 && dao.Lic.Exp > time.Now().Unix()) || dao.Lic.Type == 2 },
+		"IsLic":    func() bool { return (dao.Lic.Type == 1 && dao.Lic.Exp > time.Now().Unix()) || dao.Lic.Type >= 2 },
 	})
 
 	r.Static("/app", "/config/app")
@@ -241,7 +241,7 @@ func loadTemplates(r *gin.Engine) {
 			"Add":      func(a, b int64) int64 { return a + b },
 			"Sub":      func(a, b int64) int64 { return a - b },
 			"DisPay":   func() int64 { return dao.GetConfig().System.DisPay }, // 显示付费模块
-			"IsLic":    func() bool { return (dao.Lic.Type == 1 && dao.Lic.Exp > time.Now().Unix()) || dao.Lic.Type == 2 },
+			"IsLic":    func() bool { return (dao.Lic.Type == 1 && dao.Lic.Exp > time.Now().Unix()) || dao.Lic.Type >= 2 },
 		})
 		tmpl = template.Must(tmpl.ParseFS(assets.EmbeddedFS, "templates/*"))
 		staticFiles, _ := fs.Sub(assets.StaticFS, "static")

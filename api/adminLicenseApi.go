@@ -48,6 +48,8 @@ func License(c *gin.Context) {
 			res = service.Dispay(params)
 		case "shortURL":
 			res = service.ShortURL(params)
+		case "startPHP":
+			res = service.StartPHP(params)
 		}
 
 	}

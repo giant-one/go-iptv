@@ -73,7 +73,7 @@ func LoadConfig() bool {
 	// }
 
 	log.Println("配置文件加载成功:", CONFIG_PATH)
-	if Lic.Type != 2 {
+	if Lic.Type < 2 {
 		cfg.System.DisPay = 0
 	}
 	GlobalConfig.Store(&cfg)
