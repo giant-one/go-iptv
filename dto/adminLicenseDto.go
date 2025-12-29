@@ -16,6 +16,7 @@ type AdminLicenseDto struct {
 	EpgFuzz     int64  `json:"epg_fuzz"`
 	Aggregation int64  `json:"aggregation"`
 	ShortURL    int64  `json:"short_url"`
+	StartPHP    int64  `json:"start_php"`
 }
 
 type Lic struct {

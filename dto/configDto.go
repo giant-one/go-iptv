@@ -101,6 +101,7 @@ type Config struct {
 	Aggregation Aggregation   `mapstructure:"aggregation" json:"aggregation" yaml:"aggregation"`
 	System      System        `mapstructure:"system" json:"system" yaml:"system"`
 	MyTV        MyTV          `mapstructure:"mytv" json:"mytv" yaml:"mytv"`
+	PHPWeb      int64         `mapstructure:"php_web" json:"php_web" yaml:"php_web"`
 	// Weather   Weather   `mapstructure:"weather" json:"weather" yaml:"weather"`
 	// Cache     Cache     `mapstructure:"cache" json:"cache" yaml:"cache"`
 	// EPGErrors EPGErrors `mapstructure:"epg_errors" json:"epg_errors" yaml:"epg_errors"`

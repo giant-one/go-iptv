@@ -37,6 +37,19 @@ func License(c *gin.Context) {
 			}
 		}
 
+		var phpStatus bool
+		res, err = dao.WS.SendWS(dao.Request{Action: "phpStatus"})
+		if err == nil {
+			if err := json.Unmarshal(res.Data, &phpStatus); err != nil {
+				log.Println("PHPWeb状态解析错误:", err)
+			}
+		}
+		if phpStatus {
+			pageData.StartPHP = 1
+		} else {
+			pageData.StartPHP = 0
+		}
+
 		pageData.Lic = dao.Lic
 		cfg := dao.GetConfig()
 		pageData.Proxy = cfg.Proxy.Status

@@ -300,7 +300,7 @@ func Logout() dto.ReturnJsonDto {
 	res, err := dao.WS.SendWS(dao.Request{Action: "logout"})
 	if err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "连接引擎失败", Type: "danger"}
-	} else if res.Code != 1 {
+	} else if res.Code == 0 {
 		return dto.ReturnJsonDto{Code: 0, Msg: res.Msg, Type: "danger"}
 	} else {
 		if err := json.Unmarshal(res.Data, &dao.Lic); err != nil {
@@ -314,7 +314,7 @@ func Logout() dto.ReturnJsonDto {
 func Dispay(params url.Values) dto.ReturnJsonDto {
 	dispay := params.Get("dispay")
 	cfg := dao.GetConfig()
-	if dao.Lic.Type != 2 {
+	if dao.Lic.Type < 2 {
 		cfg.System.DisPay = 0
 		dao.SetConfig(cfg)
 		return dto.ReturnJsonDto{Code: 0, Msg: "未授权", Type: "danger"}
@@ -350,5 +350,34 @@ func ShortURL(params url.Values) dto.ReturnJsonDto {
 		cfg.System.ShortURL = 0
 	}
 	dao.SetConfig(cfg)
+	return dto.ReturnJsonDto{Code: 1, Msg: "设置成功", Type: "success"}
+}
+
+func StartPHP(params url.Values) dto.ReturnJsonDto {
+	startPHP := params.Get("startPHP")
+
+	if dao.Lic.Type != 3 {
+		return dto.ReturnJsonDto{Code: 0, Msg: "未授权", Type: "danger"}
+	}
+	cfg := dao.GetConfig()
+	if startPHP == "1" || startPHP == "true" || startPHP == "on" {
+		_, err := dao.WS.SendWS(dao.Request{Action: "startPHP"})
+		if err != nil {
+			cfg.PHPWeb = 0
+			dao.SetConfig(cfg)
+			return dto.ReturnJsonDto{Code: 0, Msg: err.Error(), Type: "danger"}
+		}
+		cfg.PHPWeb = 1
+		dao.SetConfig(cfg)
+	} else {
+		_, err := dao.WS.SendWS(dao.Request{Action: "stopPHP"})
+		if err != nil {
+			cfg.PHPWeb = 0
+			dao.SetConfig(cfg)
+			return dto.ReturnJsonDto{Code: 0, Msg: err.Error(), Type: "danger"}
+		}
+		cfg.PHPWeb = 0
+		dao.SetConfig(cfg)
+	}
 	return dto.ReturnJsonDto{Code: 1, Msg: "设置成功", Type: "success"}
 }
