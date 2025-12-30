@@ -111,9 +111,9 @@ func MealsSubmit(params url.Values) dto.ReturnJsonDto {
 	if mealName == "" {
 		return dto.ReturnJsonDto{Code: 0, Msg: "套餐名称不能为空", Type: "danger"}
 	}
-	if len(namesList) == 0 {
-		return dto.ReturnJsonDto{Code: 0, Msg: "请选择频道", Type: "danger"}
-	}
+	// if len(namesList) == 0 {
+	// 	return dto.ReturnJsonDto{Code: 0, Msg: "请选择频道", Type: "danger"}
+	// }
 
 	iptvMeals := models.IptvMeals{
 		Name:    mealName,
