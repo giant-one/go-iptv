@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"go-iptv/assets"
 	"go-iptv/dao"
 	"go-iptv/dto"
 	"go-iptv/until"
@@ -55,9 +56,14 @@ func SetMyTVAppInfo(params url.Values) dto.ReturnJsonDto {
 
 	cfg := dao.GetConfig()
 
-	if cfg.MyTV.Version == appVersion {
+	if cfg.MyTV.BaseVersion == "" {
+		cfg.MyTV.BaseVersion = string(assets.MyTVApkVersion)
+	}
+
+	if cfg.MyTV.BaseVersion == string(assets.MyTVApkVersion) && cfg.MyTV.Version == appVersion {
 		return dto.ReturnJsonDto{Code: 0, Msg: "版本号不能相同", Type: "danger"}
 	}
+	cfg.MyTV.BaseVersion = string(assets.MyTVApkVersion)
 
 	cfg.MyTV.Version = appVersion
 
