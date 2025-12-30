@@ -85,12 +85,12 @@ func (s *SignalExecutor) handleSignal() {
 	if s.waitTimer != nil {
 		s.waitTimer.Stop()
 		s.waitTimer.Reset(s.delay)
-		log.Println("🔁 重置EPG缓存重建信号等待 10 秒")
+		log.Println("🔁 重置EPG缓存重建任务等待 10 秒")
 		return
 	}
 
 	// 新建计时器
-	log.Println("⏳ 收到EPG缓存重建信号，10 秒后执行")
+	log.Println("⏳ 收到EPG缓存重建任务，10 秒后执行")
 	s.waitTimer = time.AfterFunc(s.delay, func() {
 		s.timerMu.Lock()
 		ctx, cancel := context.WithCancel(context.Background())
@@ -145,11 +145,18 @@ func InitCacheRebuild() {
 
 	// 启动执行器
 	Cache.Start()
-
+	go initEpgCache()
 	select {}
 }
 
+func initEpgCache() {
+	log.Println("初始化订阅套餐EPG缓存")
+	dao.Cache.Delete("rssEpgXml_*")
+	Cache.Rebuild()
+}
+
 func CleanMealsEpgCacheAll() {
+	log.Println("清理订阅套餐EPG缓存")
 	dao.Cache.Delete("rssEpgXml_*")
 	Cache.Rebuild()
 }

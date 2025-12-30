@@ -116,14 +116,7 @@ func main() {
 	if !debug {
 		bootstrap.InitJwtKey() // 初始化JWTkey
 		if build {
-			if os.Getenv("LOWOS") == "true" {
-				go bootstrap.BuildAPK()
-			} else {
-				if !bootstrap.BuildAPK() {
-					log.Println("APK编译错误")
-					return
-				}
-			}
+			go bootstrap.BuildAPK()
 		}
 	}
 
