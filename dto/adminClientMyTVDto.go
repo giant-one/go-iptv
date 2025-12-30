@@ -6,7 +6,7 @@ type AdminClientMyTVDto struct {
 	MyTV        MyTV   `json:"mytv"`
 	IconUrl     string `json:"iconurl"`
 	UpSize      string `json:"upsize"`
-	BaseVerson  string `json:"baseverson"`
+	BaseVersion string `json:"baseversion"`
 	ApkUrl      string `json:"apkurl"`
 	ApkName     string `json:"apkname"`
 	ServerUrl   string `json:"serverurl"`
