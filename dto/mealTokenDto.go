@@ -8,6 +8,7 @@ type MealTokenDto struct {
 	ExpiresAt int64  `json:"expires_at"`
 	Status    int64  `json:"status"`
 	Remark    string `json:"remark"`
+	ExpireDays int64 `json:"expire_days"`
 }
 
 type MealTokenListDto struct {

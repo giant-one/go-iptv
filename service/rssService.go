@@ -16,7 +16,8 @@ type RssUrl struct {
 }
 
 type AesData struct {
-	I int64 `json:"i"`
+	I int64  `json:"i"`
+	R string `json:"r,omitempty"`
 }
 
 func getAesdata(aesData AesData) (string, error) {

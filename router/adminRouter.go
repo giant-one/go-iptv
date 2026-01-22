@@ -82,6 +82,7 @@ func AdminRouter(r *gin.Engine, path string) {
 			router.POST("/meals/:meal_id/tokens", api.CreateMealToken)
 			router.POST("/meals/tokens/:token_id/status", api.UpdateMealToken)
 			router.DELETE("/meals/tokens/:token_id", api.DeleteMealToken)
+			router.POST("/meals/tokens/:token_id/extend", api.ExtendToken)
 		}
 	}
 }

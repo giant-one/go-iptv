@@ -8,6 +8,7 @@ type IptvMealToken struct {
 	ExpiresAt int64  `gorm:"column:expires_at" json:"expires_at"`
 	Status    int64  `gorm:"column:status;not null;default:1" json:"status"`
 	Remark    string `gorm:"column:remark" json:"remark"`
+	ExpireDays int64 `gorm:"column:expire_days;default:0" json:"expire_days"`
 }
 
 func (IptvMealToken) TableName() string {

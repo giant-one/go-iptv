@@ -1,6 +1,8 @@
 package service
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"go-iptv/dao"
 	"go-iptv/dto"
 	"go-iptv/models"
@@ -33,10 +35,18 @@ func GetMealTokens(mealId int64) ([]dto.MealTokenDto, error) {
 }
 
 // CreateMealToken 创建新的token
-func CreateMealToken(mealId int64, remark string) (dto.MealTokenDto, error) {
+func CreateMealToken(mealId int64, remark string, expireDays int64) (dto.MealTokenDto, error) {
+	// 生成随机值
+	randomBytes := make([]byte, 16)
+	if _, err := rand.Read(randomBytes); err != nil {
+		return dto.MealTokenDto{}, err
+	}
+	randomStr := hex.EncodeToString(randomBytes)
+
 	// 生成新的token
 	aesData := AesData{
 		I: mealId,
+		R: randomStr,
 	}
 	aesDataStr, err := getAesdata(aesData)
 	if err != nil {
@@ -50,13 +60,21 @@ func CreateMealToken(mealId int64, remark string) (dto.MealTokenDto, error) {
 		return dto.MealTokenDto{}, err
 	}
 
+	// 计算过期时间
+	var expiresAt int64 = 0
+	if expireDays > 0 {
+		expiresAt = time.Now().Unix() + expireDays*24*60*60
+	}
+
 	// 创建token记录
 	mealToken := models.IptvMealToken{
-		MealID:    mealId,
-		Token:     token,
-		CreatedAt: time.Now().Unix(),
-		Status:    1,
-		Remark:    remark,
+		MealID:     mealId,
+		Token:      token,
+		CreatedAt:  time.Now().Unix(),
+		ExpiresAt:  expiresAt,
+		Status:     1,
+		Remark:     remark,
+		ExpireDays: expireDays,
 	}
 
 	if err := dao.DB.Create(&mealToken).Error; err != nil {
@@ -64,13 +82,14 @@ func CreateMealToken(mealId int64, remark string) (dto.MealTokenDto, error) {
 	}
 
 	return dto.MealTokenDto{
-		ID:        mealToken.ID,
-		MealID:    mealToken.MealID,
-		Token:     mealToken.Token,
-		CreatedAt: mealToken.CreatedAt,
-		ExpiresAt: mealToken.ExpiresAt,
-		Status:    mealToken.Status,
-		Remark:    mealToken.Remark,
+		ID:         mealToken.ID,
+		MealID:     mealToken.MealID,
+		Token:      mealToken.Token,
+		CreatedAt:  mealToken.CreatedAt,
+		ExpiresAt:  mealToken.ExpiresAt,
+		Status:     mealToken.Status,
+		Remark:     mealToken.Remark,
+		ExpireDays: mealToken.ExpireDays,
 	}, nil
 }
 
@@ -134,4 +153,64 @@ func DeleteMealTokenAPI(params url.Values) dto.ReturnJsonDto {
 	}
 
 	return dto.ReturnJsonDto{Code: 1, Msg: "删除成功", Type: "success"}
+}
+
+// ExtendToken 延期token
+func ExtendToken(tokenId int64, extendDays int64) error {
+	// 获取当前token信息
+	var token models.IptvMealToken
+	if err := dao.DB.Where("id = ?", tokenId).First(&token).Error; err != nil {
+		return err
+	}
+
+	// 计算新的过期时间
+	var newExpiresAt int64
+	if token.ExpiresAt == 0 {
+		// 如果原来没有设置过期时间，则从现在开始计算
+		newExpiresAt = time.Now().Unix() + extendDays*24*60*60
+	} else {
+		// 如果原来设置了过期时间，则在原来的基础上延长
+		newExpiresAt = token.ExpiresAt + extendDays*24*60*60
+	}
+
+	// 更新过期时间和有效期天数
+	updates := map[string]interface{}{
+		"expires_at":  newExpiresAt,
+		"expire_days": token.ExpireDays + extendDays,
+	}
+
+	return dao.DB.Model(&models.IptvMealToken{}).Where("id = ?", tokenId).Updates(updates).Error
+}
+
+// ExtendTokenAPI 延期token API接口
+func ExtendTokenAPI(params url.Values) dto.ReturnJsonDto {
+	tokenId := params.Get("token_id")
+	if tokenId == "" {
+		return dto.ReturnJsonDto{Code: 0, Msg: "Token ID不能为空", Type: "danger"}
+	}
+
+	tokenIdInt64, err := strconv.ParseInt(tokenId, 10, 64)
+	if err != nil {
+		return dto.ReturnJsonDto{Code: 0, Msg: "Token ID格式错误", Type: "danger"}
+	}
+
+	extendDaysStr := params.Get("extend_days")
+	if extendDaysStr == "" {
+		return dto.ReturnJsonDto{Code: 0, Msg: "延期天数不能为空", Type: "danger"}
+	}
+
+	extendDays, err := strconv.ParseInt(extendDaysStr, 10, 64)
+	if err != nil {
+		return dto.ReturnJsonDto{Code: 0, Msg: "延期天数格式错误", Type: "danger"}
+	}
+
+	if extendDays <= 0 {
+		return dto.ReturnJsonDto{Code: 0, Msg: "延期天数必须大于0", Type: "danger"}
+	}
+
+	if err := ExtendToken(tokenIdInt64, extendDays); err != nil {
+		return dto.ReturnJsonDto{Code: 0, Msg: "延期失败: " + err.Error(), Type: "danger"}
+	}
+
+	return dto.ReturnJsonDto{Code: 1, Msg: "延期成功", Type: "success"}
 }

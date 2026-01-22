@@ -169,7 +169,8 @@
 					</div>
 					<div class="form-group">
 						<button class="btn btn-primary" type="button" id="createTokenBtn" onclick="createToken()">创建新Token</button>
-						<input type="text" class="form-control" id="tokenRemark" placeholder="备注（可选）" style="display: inline-block; width: 300px; margin-left: 10px;">
+						<input type="text" class="form-control" id="tokenRemark" placeholder="备注（可选）" style="display: inline-block; width: 200px; margin-left: 10px;">
+						<input type="number" class="form-control" id="tokenExpireDays" placeholder="有效期天数（可选）" style="display: inline-block; width: 150px; margin-left: 10px;">
 					</div>
 					<div class="form-group">
 						<table class="table table-bordered table-striped table-vcenter" id="tokenTable">
@@ -178,6 +179,7 @@
 									<th>Token</th>
 									<th>备注</th>
 									<th>创建时间</th>
+									<th>有效期</th>
 									<th>状态</th>
 									<th>操作</th>
 								</tr>
@@ -225,14 +227,29 @@
 							$.each(tokens, function(index, token) {
 								var statusText = token.status === 1 ? '<span class="label label-success">启用</span>' : '<span class="label label-danger">禁用</span>';
 								var createdAt = new Date(token.created_at * 1000).toLocaleString();
+								var expireText = '';
+								if (token.expires_at === 0) {
+									expireText = '永久有效';
+								} else {
+									var expireDate = new Date(token.expires_at * 1000);
+									var now = new Date();
+									var daysLeft = Math.ceil((expireDate - now) / (1000 * 60 * 60 * 24));
+									if (daysLeft < 0) {
+										expireText = '已过期';
+									} else {
+										expireText = expireDate.toLocaleString() + ' (' + daysLeft + '天后过期)';
+									}
+								}
 								var row = '<tr>' +
 									'<td><input type="text" class="form-control" value="' + token.token + '" readonly style="width: 200px;"></td>' +
 									'<td>' + (token.remark || '') + '</td>' +
 									'<td>' + createdAt + '</td>' +
+									'<td>' + expireText + '</td>' +
 									'<td>' + statusText + '</td>' +
 									'<td>' +
 										'<button class="btn btn-xs btn-info" onclick="copyToken(this)">复制</button> ' +
 										'<button class="btn btn-xs btn-warning" onclick="toggleTokenStatus(' + token.id + ', ' + (token.status === 1 ? 0 : 1) + ')">' + (token.status === 1 ? '禁用' : '启用') + '</button> ' +
+										'<button class="btn btn-xs btn-success extend-btn" onclick="extendToken(' + token.id + ')" data-token-id="' + token.id + '">延期</button> ' +
 										'<button class="btn btn-xs btn-danger" onclick="deleteToken(' + token.id + ')">删除</button>' +
 									'</td>' +
 								'</tr>';
@@ -253,16 +270,21 @@
 		function createToken() {
 			var mealId = $('#tokenMealId').val();
 			var remark = $('#tokenRemark').val();
+			var expireDays = $('#tokenExpireDays').val();
 
 			$.ajax({
 				url: '/admin/meals/' + mealId + '/tokens',
 				type: 'POST',
-				data: { remark: remark },
+				data: {
+					remark: remark,
+					expire_days: expireDays
+				},
 				dataType: 'json',
 				success: function(response) {
 					if (response.code === 1) {
 						toastr.success('创建Token成功');
 						$('#tokenRemark').val('');
+						$('#tokenExpireDays').val('');
 						loadMealTokens(mealId);
 					} else {
 						toastr.error('创建Token失败: ' + response.msg);
@@ -327,6 +349,42 @@
 				},
 				error: function() {
 					toastr.error('删除Token失败');
+				}
+			});
+		}
+
+		// 延期Token
+		function extendToken(tokenId) {
+			var extendDays = prompt('请输入要延期的天数：');
+			if (extendDays === null || extendDays === '') {
+				return;
+			}
+
+			// 验证输入是否为数字
+			if (!/^\d+$/.test(extendDays) || parseInt(extendDays) <= 0) {
+				toastr.error('请输入有效的天数');
+				return;
+			}
+
+			var mealId = $('#tokenMealId').val();
+
+			$.ajax({
+				url: '/admin/meals/tokens/' + tokenId + '/extend',
+				type: 'POST',
+				data: {
+					extend_days: extendDays
+				},
+				dataType: 'json',
+				success: function(response) {
+					if (response.code === 1) {
+						toastr.success('延期Token成功');
+						loadMealTokens(mealId);
+					} else {
+						toastr.error('延期Token失败: ' + response.msg);
+					}
+				},
+				error: function() {
+					toastr.error('延期Token失败');
 				}
 			});
 		}
