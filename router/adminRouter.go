@@ -76,6 +76,12 @@ func AdminRouter(r *gin.Engine, path string) {
 			router.GET("/updata/updata", api.Updata)
 
 			router.POST("/getRssUrl", api.GetRssUrl)
+
+			// 多token管理API
+			router.GET("/meals/:meal_id/tokens", api.GetMealTokens)
+			router.POST("/meals/:meal_id/tokens", api.CreateMealToken)
+			router.POST("/meals/tokens/:token_id/status", api.UpdateMealToken)
+			router.DELETE("/meals/tokens/:token_id", api.DeleteMealToken)
 		}
 	}
 }

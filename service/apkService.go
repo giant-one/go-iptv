@@ -76,7 +76,7 @@ func ApkLogin(user models.IptvUser) dto.LoginRes {
 	result.TipUserNoReg = "当前账号 " + strconv.FormatInt(user.Name, 10) + " " + cfg.Tips.UserNoReg
 	result.TipUserExpired = "当前账号 " + strconv.FormatInt(user.Name, 10) + " " + cfg.Tips.UserExpired
 	result.TipUserForbidden = "当前账号 " + strconv.FormatInt(user.Name, 10) + " " + cfg.Tips.UserForbidden
-	result.AdInfo = "作者博客: www.qingh.xyz"
+	result.AdInfo = "客服QQ：2492277473"
 	result.RandKey = until.Md5(time.Now().Format("20060102150405") + strconv.FormatInt(user.Name, 10))
 
 	return getUserInfo(user, result)

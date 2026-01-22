@@ -122,4 +122,15 @@ CREATE TABLE short_url (
 );
 
 CREATE TABLE IF NOT EXISTS "iptv_movie"  (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,`name` text,api TEXT DEFAULT NULL,`state` integer);
+
+CREATE TABLE IF NOT EXISTS "iptv_meal_tokens" (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    meal_id INTEGER NOT NULL,
+    token TEXT NOT NULL UNIQUE,
+    created_at BIGINT NOT NULL,
+    expires_at BIGINT,
+    status INTEGER NOT NULL DEFAULT 1,
+    remark TEXT,
+    FOREIGN KEY (meal_id) REFERENCES iptv_meals(id) ON DELETE CASCADE
+);
 COMMIT;
