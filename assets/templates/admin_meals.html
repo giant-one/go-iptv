@@ -197,6 +197,24 @@
 		</div>
 	</div>
 <script>
+	// 配置toastr默认选项
+	toastr.options = {
+		"closeButton": true,
+		"debug": false,
+		"newestOnTop": false,
+		"progressBar": true,
+		"positionClass": "toast-top-right",
+		"preventDuplicates": false,
+		"onclick": null,
+		"showDuration": "300",
+		"hideDuration": "1000",
+		"timeOut": "5000",
+		"extendedTimeOut": "1000",
+		"showEasing": "swing",
+		"hideEasing": "linear",
+		"showMethod": "fadeIn",
+		"hideMethod": "fadeOut"
+	}
 		// 管理套餐tokens
 		function manageTokens(button) {
 			var mealId = $(button).val();
@@ -247,7 +265,7 @@
 									'<td>' + expireText + '</td>' +
 									'<td>' + statusText + '</td>' +
 									'<td>' +
-										'<button class="btn btn-xs btn-info" onclick="copyToken(this)">复制</button> ' +
+										'<button class="btn btn-xs btn-info" onclick="showCopyLinkModal(this)">复制</button>' +
 										'<button class="btn btn-xs btn-warning" onclick="toggleTokenStatus(' + token.id + ', ' + (token.status === 1 ? 0 : 1) + ')">' + (token.status === 1 ? '禁用' : '启用') + '</button> ' +
 										'<button class="btn btn-xs btn-success extend-btn" onclick="extendToken(' + token.id + ')" data-token-id="' + token.id + '">延期</button> ' +
 										'<button class="btn btn-xs btn-danger" onclick="deleteToken(' + token.id + ')">删除</button>' +
@@ -296,14 +314,7 @@
 			});
 		}
 
-		// 复制Token
-		function copyToken(button) {
-			var tokenInput = $(button).closest('tr').find('input[type="text"]');
-			tokenInput.select();
-			document.execCommand('copy');
-			toastr.success('Token已复制到剪贴板');
-		}
-
+		
 		// 切换Token状态
 		function toggleTokenStatus(tokenId, status) {
 			var mealId = $('#tokenMealId').val();
@@ -372,7 +383,8 @@
 				url: '/admin/meals/tokens/' + tokenId + '/extend',
 				type: 'POST',
 				data: {
-					extend_days: extendDays
+					extend_days: extendDays,
+					token_id: tokenId
 				},
 				dataType: 'json',
 				success: function(response) {
@@ -388,6 +400,134 @@
 				}
 			});
 		}
+	// 显示复制链接格式选择模态框
+		function showCopyLinkModal(button) {
+			var tokenInput = $(button).closest('tr').find('input[type="text"]');
+			var tokenId = $(button).closest('tr').find('.btn-warning, .btn-success').attr('onclick').match(/toggleTokenStatus\((\d+)/)[1];
+			var tokenValue = tokenInput.val();
+
+			$('#currentTokenId').val(tokenId);
+			$('#currentTokenValue').val(tokenValue);
+			$('#tokenValueDisplay').val(tokenValue);
+
+			// 清除之前的选中状态
+			$('input[name="linkFormat"]').prop('checked', false);
+			$('input[name="linkFormat"][value="token"]').prop('checked', true);
+
+			$('#copyLinkModal').modal('show');
+		}
+
+		// 复制选中的链接格式
+		function copySelectedLink() {
+			var tokenId = $('#currentTokenId').val();
+			var tokenValue = $('#currentTokenValue').val();
+			var selectedFormat = $('input[name="linkFormat"]:checked').val();
+
+			if (selectedFormat === 'token') {
+				// 直接复制token
+				copyTextToClipboard(tokenValue);
+				toastr.success('Token已复制到剪贴板');
+				$('#copyLinkModal').modal('hide');
+			} else {
+				// 获取对应的链接格式
+				var mealId = $('#tokenMealId').val();
+				$.ajax({
+					url: '/admin/getRssUrl',
+					type: 'POST',
+					data: {
+						id: mealId
+					},
+					dataType: 'json',
+					success: function(response) {
+						if (response.type === "success") {
+							var linkUrl = '';
+							response.data.forEach(function(item) {
+								if ((selectedFormat === 'txt' && item.type === 'txt') ||
+									(selectedFormat === 'm3u' && item.type === 'm3u8') ||
+									(selectedFormat === 'ku9' && item.type === 'ku9')) {
+									linkUrl = item.url.replace('{token}', tokenValue);
+								}
+							});
+
+							if (linkUrl) {
+								copyTextToClipboard(linkUrl);
+								toastr.success('链接已复制到剪贴板');
+							} else {
+								toastr.error('未找到对应的链接格式');
+							}
+							$('#copyLinkModal').modal('hide');
+						} else {
+							toastr.error('获取链接失败: ' + response.msg);
+						}
+					},
+					error: function() {
+						toastr.error('获取链接失败');
+						$('#copyLinkModal').modal('hide');
+					}
+				});
+			}
+		}
+
+		// 复制文本到剪贴板的辅助函数
+		function copyTextToClipboard(text) {
+			var tempInput = $('<input>');
+			$('body').append(tempInput);
+			tempInput.val(text).select();
+			document.execCommand('copy');
+			tempInput.remove();
+		}
 	</script>
+
+<!-- 复制链接格式选择模态框 -->
+<div class="modal fade" id="copyLinkModal" tabindex="-1" role="dialog">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+				<h4 class="modal-title">选择链接格式</h4>
+			</div>
+			<div class="modal-body">
+				<input type="hidden" id="currentTokenId" value="">
+				<input type="hidden" id="currentTokenValue" value="">
+				<div class="form-group">
+					<label class="control-label">Token：</label>
+					<input type="text" class="form-control" id="tokenValueDisplay" readonly>
+				</div>
+				<div class="form-group">
+					<label class="control-label">选择链接格式：</label>
+					<div class="radio">
+						<label>
+							<input type="radio" name="linkFormat" value="token" checked>
+							仅复制Token
+						</label>
+					</div>
+					<div class="radio">
+						<label>
+							<input type="radio" name="linkFormat" value="txt">
+							TXT格式链接
+						</label>
+					</div>
+					<div class="radio">
+						<label>
+							<input type="radio" name="linkFormat" value="m3u">
+							M3U格式链接
+						</label>
+					</div>
+					<div class="radio">
+						<label>
+							<input type="radio" name="linkFormat" value="ku9">
+							酷9TXT格式链接
+						</label>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-primary" onclick="copySelectedLink()">复制</button>
+				<button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 </main>
 {{ template "admin_footer" . }}

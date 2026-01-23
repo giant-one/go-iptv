@@ -129,6 +129,7 @@ CREATE TABLE IF NOT EXISTS "iptv_meal_tokens" (
     token TEXT NOT NULL UNIQUE,
     created_at BIGINT NOT NULL,
     expires_at BIGINT,
+    expire_days BIGINT,
     status INTEGER NOT NULL DEFAULT 1,
     remark TEXT,
     FOREIGN KEY (meal_id) REFERENCES iptv_meals(id) ON DELETE CASCADE

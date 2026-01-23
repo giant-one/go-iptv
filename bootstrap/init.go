@@ -67,6 +67,7 @@ func InitDB() bool {
 
 	dao.DB.AutoMigrate(&models.IptvMeals{})
 	dao.DB.AutoMigrate(&models.IptvMovie{})
+	dao.DB.AutoMigrate(&models.IptvMealToken{})
 	return true
 }
 
