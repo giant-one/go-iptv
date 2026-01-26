@@ -1,3 +1,7 @@
 iptv_dist
 .idea
 database/migrations
+config
+docker-compose.dev.yml
+dist
+Dockerfile-dev

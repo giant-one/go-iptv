@@ -91,6 +91,17 @@ func GetRssUrl(id, host string, getnewkey bool) dto.ReturnJsonDto {
 	return dto.ReturnJsonDto{Code: 1, Msg: "订阅生成成功", Type: "success", Data: res}
 }
 
+func GenTokenRssUrl(token, host string) dto.ReturnJsonDto {
+	var res []RssUrl
+
+	res = append(res, RssUrl{Type: "m3u8", Url: host + "/getRss/" + token + "/paylist.m3u"})
+	res = append(res, RssUrl{Type: "txt", Url: host + "/getRss/" + token + "/paylist.txt"})
+	res = append(res, RssUrl{Type: "ku9", Url: host + "/ku9/" + token + "/paylist.txt"})
+	res = append(res, RssUrl{Type: "epg", Url: host + "/epg/" + token + "/e.xml"})
+
+	return dto.ReturnJsonDto{Code: 1, Msg: "订阅生成成功", Type: "success", Data: res}
+}
+
 func GetRssToken(key string) string {
 	cfg := dao.GetConfig()
 	if cfg.System.ShortURL == 1 && dao.Lic.Type != 0 {

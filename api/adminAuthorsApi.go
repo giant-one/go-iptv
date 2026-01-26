@@ -22,6 +22,8 @@ func Authors(c *gin.Context) {
 		switch k {
 		case "submitauthorforever":
 			res = service.SubmitAuthorForever(params, username)
+		case "submitauthor":
+			res = service.SubmitAuthorWithDays(params, username)
 		case "submitforbidden":
 			res = service.ForbiddenUser(params)
 		case "submitdelonedaybefor":

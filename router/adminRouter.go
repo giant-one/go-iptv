@@ -76,6 +76,7 @@ func AdminRouter(r *gin.Engine, path string) {
 			router.GET("/updata/updata", api.Updata)
 
 			router.POST("/getRssUrl", api.GetRssUrl)
+			router.POST("/getTokenRssUrl", api.GetTokenRssUrl)
 
 			// 多token管理API
 			router.GET("/meals/:meal_id/tokens", api.GetMealTokens)

@@ -432,10 +432,10 @@
 				// 获取对应的链接格式
 				var mealId = $('#tokenMealId').val();
 				$.ajax({
-					url: '/admin/getRssUrl',
+					url: '/admin/getTokenRssUrl',
 					type: 'POST',
 					data: {
-						id: mealId
+						token: tokenValue
 					},
 					dataType: 'json',
 					success: function(response) {

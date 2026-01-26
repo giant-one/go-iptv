@@ -37,6 +37,26 @@ func GetRssUrl(c *gin.Context) {
 	c.JSON(200, service.GetRssUrl(id, host, false))
 }
 
+func GetTokenRssUrl(c *gin.Context) {
+	_, ok := until.GetAuthName(c)
+	if !ok {
+		c.JSON(200, dto.NewAdminRedirectDto())
+		return
+	}
+	token := c.PostForm("token")
+
+	scheme := GetClientScheme(c)
+
+	host := c.Request.Host
+	if !until.IsValidHost(host) {
+		c.String(200, "参数错误3")
+		return
+	}
+	host = fmt.Sprintf("%s://%s", scheme, host)
+
+	c.JSON(200, service.GenTokenRssUrl(token, host))
+}
+
 func GetRssM3u(c *gin.Context) {
 	token := c.Param("token")
 	if token == "" {
