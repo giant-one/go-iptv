@@ -159,9 +159,12 @@ func GetChannels(channel dto.DataReqDto) string {
 			return tmpData[i].Num < tmpData[j].Num
 		})
 
+		// 清理分组名称，移除括号内的源列表标识
+		cleanedName := until.CleanCategoryName(v.Name)
+
 		resList = append(resList, dto.ChannelListDto{
 			ID:   int64(v.Sort + 3),
-			Name: v.Name,
+			Name: cleanedName,
 			Data: tmpData,
 		})
 	}
@@ -235,6 +238,17 @@ func CompressString(input string) (string, error) {
 
 func getUserInfo(user models.IptvUser, result dto.LoginRes) dto.LoginRes {
 	var cfg = dao.GetConfig()
+
+	// 检查是否过期（除了 status = 999 永不到期的情况）
+	if user.Status != 999 && user.Exp > 0 {
+		now := time.Now()
+		if now.Unix() > user.Exp {
+			// 已过期，设置 status 为 -1（未授权）
+			user.Status = -1
+		} else {
+			result.Exp = until.CalcRemainDays(user.Exp)
+		}
+	}
 
 	var movie []models.IptvMovie
 	dao.DB.Model(&models.IptvMovie{}).Where("state = ?", 1).Order("id desc").Find(&movie)

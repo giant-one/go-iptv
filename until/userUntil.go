@@ -72,3 +72,15 @@ func PasswordReset() bool {
 	log.Println("密码重置成功")
 	return true
 }
+
+func CalcRemainDays(exp int64) int64 {
+	expTime := time.Unix(exp, 0)
+	now := time.Now()
+
+	if expTime.Before(now) {
+		return 0
+	}
+
+	d := expTime.Sub(now)
+	return int64(math.Ceil(d.Hours() / 24))
+}

@@ -570,7 +570,9 @@ func GetTxt(id int64) string {
 		if len(channels) == 0 {
 			continue
 		}
-		res += category.Name + ",#genre#\n"
+		// 清理分组名称，移除括号内的源列表标识
+		cleanedCategoryName := CleanCategoryName(category.Name)
+		res += cleanedCategoryName + ",#genre#\n"
 		for _, channel := range channels {
 			if channel.Status == 1 {
 				if category.Proxy == 1 && cfg.Proxy.Status == 1 {
@@ -617,6 +619,8 @@ func GetTxtKu9(id int64) string {
 
 	for _, category := range categoryList {
 		caGroup, caName := GetCaName(category.Name)
+		// 清理分组名称，移除括号内的源列表标识
+		caName = CleanCategoryName(caName)
 		if caGroup == "" {
 			caGroup = "default"
 		}
@@ -707,6 +711,9 @@ func GetM3u8(id int64, host, token string) string {
 			continue
 		}
 
+		// 清理分组名称，移除括号内的源列表标识
+		cleanedCategoryName := CleanCategoryName(category.Name)
+
 		for _, channel := range channels {
 			if channel.Status == 1 {
 				var logo string = ""
@@ -716,13 +723,13 @@ func GetM3u8(id int64, host, token string) string {
 				}
 				if category.Proxy == 1 && cfg.Proxy.Status == 1 {
 					extinf = fmt.Sprintf(`#EXTINF:-1 tvg-id="%s" tvg-name="%s" tvg-logo="%s" group-title="%s" http-user-agent="%s",%s`,
-						channel.Name, channel.Name, logo, category.Name, category.UA, channel.Name)
+						channel.Name, channel.Name, logo, cleanedCategoryName, category.UA, channel.Name)
 					builder.WriteString(extinf + "\n")
 					builder.WriteString(channel.PUrl + "\n\n")
 					continue
 				}
 				extinf = fmt.Sprintf(`#EXTINF:-1 tvg-id="%s" tvg-name="%s" tvg-logo="%s" group-title="%s" http-user-agent="%s",%s`,
-					channel.Name, channel.Name, logo, category.Name, category.UA, channel.Name)
+					channel.Name, channel.Name, logo, cleanedCategoryName, category.UA, channel.Name)
 				builder.WriteString(extinf + "\n")
 				builder.WriteString(channel.Url + "\n\n")
 			}
@@ -775,6 +782,9 @@ func MytvM3u8(id int64, deviceId, host string) string {
 			continue
 		}
 
+		// 清理分组名称，移除括号内的源列表标识
+		cleanedCategoryName := CleanCategoryName(category.Name)
+
 		for _, channel := range channels {
 			if channel.Status == 1 {
 				var logo string = ""
@@ -784,13 +794,13 @@ func MytvM3u8(id int64, deviceId, host string) string {
 				}
 				if category.Proxy == 1 && cfg.Proxy.Status == 1 {
 					extinf = fmt.Sprintf(`#EXTINF:-1 tvg-id="%s" tvg-name="%s" tvg-logo="%s" group-title="%s" http-user-agent="%s",%s`,
-						channel.Name, channel.Name, logo, category.Name, category.UA, channel.Name)
+						channel.Name, channel.Name, logo, cleanedCategoryName, category.UA, channel.Name)
 					builder.WriteString(extinf + "\n")
 					builder.WriteString(channel.PUrl + "\n\n")
 					continue
 				}
 				extinf = fmt.Sprintf(`#EXTINF:-1 tvg-id="%s" tvg-name="%s" tvg-logo="%s" group-title="%s" http-user-agent="%s",%s`,
-					channel.Name, channel.Name, logo, category.Name, category.UA, channel.Name)
+					channel.Name, channel.Name, logo, cleanedCategoryName, category.UA, channel.Name)
 				builder.WriteString(extinf + "\n")
 				builder.WriteString(channel.Url + "\n\n")
 			}
@@ -818,4 +828,13 @@ func GetCaName(s string) (content string, cleaned string) {
 	}
 
 	return
+}
+
+// CleanCategoryName 清理分组名称，移除括号内的源列表标识
+// 例如："浙江电信(测试)" → "浙江电信"
+func CleanCategoryName(s string) string {
+	// 移除圆括号及其内容
+	re := regexp.MustCompile(`\(.*?\)`)
+	cleaned := re.ReplaceAllString(s, "")
+	return strings.TrimSpace(cleaned)
 }
