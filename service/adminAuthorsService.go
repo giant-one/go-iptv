@@ -71,7 +71,7 @@ func SubmitAuthorWithDays(params url.Values, username string) dto.ReturnJsonDto 
 
 	dao.DB.Model(&models.IptvUser{}).Where("name IN (?)", ids).Updates(map[string]interface{}{
 		"meal":       meal,
-		"status":     999,
+		"status":     1, // 按天授权应该设置为1，这样才能显示剩余天数而不是"永不到期"
 		"exp":        expTime,
 		"author":     username,
 		"authortime": time.Now().Unix(),

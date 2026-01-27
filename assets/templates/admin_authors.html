@@ -56,7 +56,8 @@
 												<th class="w-10"><a href="?order=model" class="loaduser">型号</a></th>
 												<th class="w-10"><a href="?order=ip" class="loaduser">IP</a></th>
 												<th class="w-15"><a href="?order=region" class="loaduser">地区</a></th>
-												<th class="w-10"><a href="?order=exp" class="loaduser">状态</a></th>
+												<th class="w-15"><a href="?order=exp" class="loaduser">到期时间</a></th>
+												<th class="w-10"><a href="?order=status" class="loaduser">状态</a></th>
 												<th class="w-15"><a href="?order=lasttime" class="loaduser">最后登陆</a></th>
 											</tr>
 											</thead>
@@ -75,19 +76,20 @@
 													<td>{{ .Model }}</td>
 													<td>{{ .IP }}</td>
 													<td>{{ .Region }}</td>
-													<td title='{{ .ExpDesc }}'>{{ .ExpDays }}</td>
+													<td>{{ .ExpDesc }}</td>
+													<td>{{ .ExpDays }}</td>
 													<td>{{ .LastTimeStr }}</td>
 												</tr>
 												{{ end }}
 											{{ else }}
 												<tr>
-													<td align='center' colspan='12' style="color:red;">对不起，当前未有已授权的用户数据</td>
+													<td align='center' colspan='13' style="color:red;">对不起，当前未有已授权的用户数据</td>
 												</tr>
 											{{ end }}
 											</tbody>
 											<tfoot>
 												<tr>
-													<td colspan="10">
+													<td colspan="11">
 														<div class="form-inline pull-left">
 															<select class="btn btn-sm btn-default dropdown-toggle" style="width: 115px;height: 30px;" name="meal">
 															{{ if gt (len .Meals) 0 }}

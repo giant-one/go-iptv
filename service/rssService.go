@@ -120,16 +120,22 @@ func GetRssToken(key string) string {
 }
 
 func GetRss(token, host, t string) string {
+	log.Printf("[DEBUG]GetRss - RssKey=%s, token=%s", string(until.RssKey), token)
 
 	aes := until.NewChaCha20(string(until.RssKey))
 	jsonStr, err := aes.Decrypt(token)
 	if err != nil {
+		log.Printf("[DEBUG]GetRss - 解密失败: %v", err)
 		return "订阅失败,token解密错误"
 	}
 	aesData, err := getAesType(jsonStr)
 	if err != nil {
+		log.Printf("[DEBUG]GetRss - 反序列化失败: %v", err)
 		return "订阅失败，token读取错误"
 	}
+
+	log.Printf("[DEBUG]GetRss - 解密成功: aesData=%+v", aesData)
+
 	if t == "t" {
 		return until.GetTxt(aesData.I)
 	} else {

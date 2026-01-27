@@ -25,7 +25,7 @@ func CheckUserDay(users []models.IptvUserShow) []models.IptvUserShow {
 	for i, u := range users {
 		users[i].LastTimeStr = time.Unix(u.LastTime, 0).Format("2006-01-02 15:04:05")
 		// 默认到期时间
-		expDate := "到期时间：" + time.Unix(u.Exp, 0).Format("2006-01-02 15:04:05")
+		expDate := time.Unix(u.Exp, 0).Format("2006-01-02 15:04:05")
 		remainDays := int(math.Ceil(float64(u.Exp-now) / 86400))
 		days := ""
 		statusDesc := ""

@@ -7,6 +7,7 @@ import (
 	"go-iptv/dto"
 	"go-iptv/models"
 	"go-iptv/until"
+	"log"
 	"net/url"
 	"strconv"
 	"time"
@@ -59,6 +60,8 @@ func CreateMealToken(mealId int64, remark string, expireDays int64) (dto.MealTok
 	if err != nil {
 		return dto.MealTokenDto{}, err
 	}
+	log.Printf("[DEBUG]CreateMealToken - mealId=%d, RssKey=%s, aesDataStr=%s, token=%s",
+		mealId, string(until.RssKey), aesDataStr, token)
 
 	// 计算过期时间
 	var expiresAt int64 = 0

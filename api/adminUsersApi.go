@@ -108,7 +108,10 @@ func EditUsers(c *gin.Context) {
 					newExp = user.Exp + int64(days*86400)
 				}
 
-				dao.DB.Model(&models.IptvUser{}).Where("name = ?", user.Name).Update("exp", newExp)
+				dao.DB.Model(&models.IptvUser{}).Where("name = ?", user.Name).Updates(map[string]interface{}{
+					"exp":    newExp,
+					"status": 1,
+				})
 			}
 
 			c.JSON(200, gin.H{"code": 1, "msg": "已延期选中的用户账号", "type": "success"})

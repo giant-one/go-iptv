@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"go-iptv/dao"
 	"go-iptv/until"
+	"log"
 	"time"
 )
 
@@ -18,5 +19,6 @@ func InitJwtKey() {
 	} else {
 		until.RssKey = []byte(cfg.Rss.Key)
 	}
+	log.Printf("[DEBUG]InitJwtKey - RssKey=%s", string(until.RssKey))
 	// until.RssKey = []byte(until.Md5(hostname))
 }
