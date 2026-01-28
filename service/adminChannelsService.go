@@ -596,9 +596,12 @@ func SaveChannelsOne(params url.Values) dto.ReturnJsonDto {
 
 func GenreChannels(srclist string, caList models.IptvCategoryList, doRepeat, group bool) dto.ReturnJsonDto {
 
-	data := until.ConvertDataToMap(srclist, group)
+	// 使用有序 slice 替代 map，保证分组按原始顺序处理
+	data := until.ConvertDataToOrderedSlice(srclist, group)
 	var repeatCount int
-	for genreName, genreList := range data {
+	for _, orderedGenre := range data {
+		genreName := orderedGenre.GenreName
+		genreList := orderedGenre.ChannelDto
 		genreName = strings.TrimSpace(genreName)
 		if genreName == "" {
 			continue

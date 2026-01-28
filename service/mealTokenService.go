@@ -37,8 +37,8 @@ func GetMealTokens(mealId int64) ([]dto.MealTokenDto, error) {
 
 // CreateMealToken 创建新的token
 func CreateMealToken(mealId int64, remark string, expireDays int64) (dto.MealTokenDto, error) {
-	// 生成随机值
-	randomBytes := make([]byte, 16)
+	// 生成随机值（使用6字节，约12字符16进制）
+	randomBytes := make([]byte, 6)
 	if _, err := rand.Read(randomBytes); err != nil {
 		return dto.MealTokenDto{}, err
 	}

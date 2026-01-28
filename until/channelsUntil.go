@@ -103,6 +103,65 @@ func ConvertDataToMap(data string, group bool) map[string]dto.ChannelDto {
 	return result
 }
 
+// ConvertDataToOrderedSlice 将格式化数据转换为有序的分组 slice，保持原始顺序
+// 用于确保分组按原始文件顺序处理，避免 map 遍历顺序不确定的问题
+func ConvertDataToOrderedSlice(data string, group bool) []dto.OrderedGenreChannelDto {
+	lines := strings.Split(data, "\n")
+	resultMap := make(map[string]dto.ChannelDto)
+	var genreOrder []string // 记录分组出现的顺序
+	currentGenre := ""
+	groupName := ""
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		if strings.Contains(line, ",#group#") {
+			if group {
+				name := strings.SplitN(line, ",#group#", 2)[0]
+				if name != "" {
+					groupName = "[" + name + "]"
+				}
+			}
+			continue
+		}
+
+		if strings.Contains(line, "#genre#") {
+			currentGenre = strings.SplitN(line, ",#genre#", 2)[0] + groupName
+
+			if _, exists := resultMap[currentGenre]; !exists {
+				resultMap[currentGenre] = dto.ChannelDto{
+					Ku9: strings.SplitN(line, ",#genre#", 2)[1],
+				}
+				// 记录首次出现的分组名称
+				genreOrder = append(genreOrder, currentGenre)
+			}
+		} else if currentGenre != "" {
+			tmp := resultMap[currentGenre]
+			if resultMap[currentGenre].SrcList != "" {
+				tmp.SrcList += "\n"
+			}
+			tmp.SrcList += line
+			resultMap[currentGenre] = tmp
+		}
+	}
+
+	// 按记录的顺序构建有序的 slice
+	result := make([]dto.OrderedGenreChannelDto, 0, len(genreOrder))
+	for _, genreName := range genreOrder {
+		if genreData, exists := resultMap[genreName]; exists {
+			result = append(result, dto.OrderedGenreChannelDto{
+				GenreName:   genreName,
+				ChannelDto: genreData,
+			})
+		}
+	}
+
+	return result
+}
+
 func M3UToGenreTXT(m3u string) string {
 	lines := strings.Split(m3u, "\n")
 
